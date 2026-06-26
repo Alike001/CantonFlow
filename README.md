@@ -1,156 +1,36 @@
-# CantonFlow Invoice Finance
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-> Private invoice financing infrastructure powered by Canton Network.
+## Getting Started
 
-## Overview
+First, run the development server:
 
-CantonFlow is a privacy-preserving invoice financing platform that enables SMEs to access working capital while protecting sensitive commercial information.
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-Businesses upload invoices, qualified lenders submit confidential financing offers, and financing agreements settle atomically using Canton Network and DAML smart contracts.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Unlike traditional blockchain applications, CantonFlow leverages Canton's selective disclosure model so each participant only sees the information relevant to them.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
----
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Problem
+## Learn More
 
-Small businesses often wait 30–90 days before invoices are paid.
+To learn more about Next.js, take a look at the following resources:
 
-Traditional invoice financing suffers from:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- Slow manual approvals
-- Sensitive invoice data shared with multiple parties
-- Lack of privacy
-- Expensive intermediaries
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
----
+## Deploy on Vercel
 
-## Solution
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-CantonFlow enables:
-
-- Private invoice submission
-- Confidential lender bidding
-- Secure financing agreements
-- Atomic settlement
-- Regulatory compliance
-
----
-
-## Folder Structure
-
-cantonflow-invoice-finance/
-│
-├── README.md
-├── LICENSE
-├── .gitignore
-├── package.json
-│
-├── apps/
-│   └── web/                  # Next.js Frontend
-│
-├── backend/
-│   ├── api/
-│   ├── services/
-│   └── middleware/
-│
-├── daml/
-│   ├── Invoice.daml
-│   ├── FinancingRequest.daml
-│   ├── FinancingBid.daml
-│   └── FinancingAgreement.daml
-│
-├── docs/
-│   ├── architecture.md
-│   ├── workflow.md
-│   └── api.md
-│
-├── assets/
-│   ├── logo/
-│   ├── screenshots/
-│   └── diagrams/
-│
-├── presentation/
-│   └── CantonFlow-Pitch.pptx
-│
-└── .github/
-    └── workflows/
-
----
-
-## Features
-
-- Private Invoice Marketplace
-- Confidential Lender Bidding
-- DAML Smart Contracts
-- Role-Based Access Control
-- Canton Selective Disclosure
-- Institutional Trade Finance Workflow
-
----
-
-## Tech Stack
-
-Frontend
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-
-Backend
-- Node.js
-- Express
-
-Blockchain
-- Canton Network
-- DAML
-
-Deployment
-- Vercel
-
----
-
-## User Roles
-
-### Supplier
-
-- Upload invoices
-- Request financing
-- Compare offers
-- Accept funding
-
-### Lender
-
-- Browse financing opportunities
-- Submit confidential bids
-- Manage investments
-
-### Regulator
-
-- Monitor compliance
-- View audit metadata
-- Verify settlement
-
----
-
-## Architecture
-
-Next.js Frontend
-
-↓
-
-Backend API
-
-↓
-
-DAML Smart Contracts
-
-↓
-
-Canton Network
-
----
-
-## Status
-
-🚧 Currently under active development for the Encode Club Build on Canton Hackathon.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
