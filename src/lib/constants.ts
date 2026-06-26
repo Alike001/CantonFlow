@@ -1,11 +1,17 @@
 export const APP = {
   name: "CantonFlow",
+
   tagline: "Private Trade Finance Infrastructure",
 
-  heroTitle: "Unlock Working Capital Without Compromising Privacy",
+  heroTitle: "Confidential Invoice Financing for Modern Businesses",
 
   heroDescription:
-    "Finance unpaid invoices through confidential lender bidding, selective disclosure, and secure settlement powered by Canton Network.",
+    "Secure invoice financing powered by Canton Network. Suppliers receive confidential funding offers while lenders compete through privacy-preserving workflows.",
+
+  description:
+    "A privacy-preserving invoice financing platform built on Canton Network.",
 
   github: "https://github.com/Alike001/CantonFlow",
+
+  author: "Hammed Ali Oyeleye",
 };

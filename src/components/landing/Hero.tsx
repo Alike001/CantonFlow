@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Section from "@/components/shared/Section";
 import { ArrowRight, ShieldCheck, Lock, Landmark } from "lucide-react";
@@ -22,14 +23,18 @@ export default function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            <Button size="lg">
-              Start Financing
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link href="/supplier">
+              <Button size="lg">
+                Launch Demo
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
 
-            <Button size="lg" variant="outline">
-              Learn More
-            </Button>
+            <Link href="#workflow">
+              <Button size="lg" variant="outline">
+                Learn More
+              </Button>
+            </Link>
           </div>
 
           <div className="mt-10 flex flex-wrap gap-6 text-sm text-slate-500">
