@@ -15,6 +15,10 @@ const navLinks = [
     href: "#workflow",
   },
   {
+    name: "Privacy",
+    href: "#privacy",
+  },
+  {
     name: "Why Canton",
     href: "#why-canton",
   },
