@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CantonFlow
 
-## Getting Started
+CantonFlow is a privacy-first invoice financing platform for SMEs and institutional lenders. Suppliers upload unpaid invoices, receive confidential funding offers, and move toward atomic settlement through Canton Network-style selective disclosure.
 
-First, run the development server:
+Built for the Encode Club x Canton Foundation Build on Canton Hackathon.
+
+## Why CantonFlow
+
+Invoice financing depends on sensitive commercial data: buyer names, invoice PDFs, discount rates, lender appetite, and supplier cash-flow needs. Public-by-default workflows are a poor fit for this market.
+
+CantonFlow focuses on the workflows institutions actually need:
+
+- Confidential lender bidding
+- Selective disclosure by participant role
+- Permissioned invoice financing workflows
+- Atomic funding and settlement as the next integration milestone
+- Professional UX for suppliers, lenders, and regulated finance teams
+
+## Current Checkpoint Scope
+
+The checkpoint demo is a polished frontend prototype. DAML and Canton integration are intentionally deferred until after the checkpoint.
+
+Implemented:
+
+- Landing page with Canton-specific privacy narrative
+- Supplier dashboard with responsive layout
+- KPI cards, recent invoice table, and activity stream
+- Working upload invoice form with validation and success state
+- Confidential marketplace demo with private lender offers
+- Clean navigation across all live routes
+- Production build verification
+
+## Demo Flow
+
+1. Open the landing page.
+2. Click `Launch Demo`.
+3. Review the Supplier Dashboard.
+4. Open `Upload`.
+5. Submit the prefilled invoice form.
+6. Open `Marketplace`.
+7. Explain how lender offers remain confidential and selectively disclosed.
+
+## Tech Stack
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Lucide Icons
+- Zod validation
+
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Verification
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## Remaining Milestones
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [MILESTONES.md](./MILESTONES.md).

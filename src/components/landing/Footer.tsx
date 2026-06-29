@@ -23,15 +23,20 @@ export default function Footer() {
           <Link
             href="https://github.com/Alike001/CantonFlow"
             target="_blank"
+            rel="noopener noreferrer"
           >
             GitHub
           </Link>
 
-          <Link href="/">
+          <Link href="#why-canton">
             Built on Canton Network
           </Link>
 
-          <Link href="/">
+          <Link
+            href="https://www.encodeclub.com/programmes/canton-hackathon"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Encode Club 2026
           </Link>
         </div>

@@ -15,14 +15,14 @@ export default function StatCard({
   icon: Icon,
 }: StatCardProps) {
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardContent className="flex items-center justify-between p-6">
-        <div>
-          <p className="text-sm text-slate-500">
+    <Card className="rounded-lg border-slate-200 shadow-sm">
+      <CardContent className="flex items-center justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-500">
             {title}
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
             {value}
           </h3>
 
@@ -31,8 +31,8 @@ export default function StatCard({
           </p>
         </div>
 
-        <div className="rounded-xl bg-violet-100 p-4">
-          <Icon className="h-7 w-7 text-violet-700" />
+        <div className="rounded-lg bg-slate-100 p-3">
+          <Icon className="h-5 w-5 text-slate-700" />
         </div>
       </CardContent>
     </Card>

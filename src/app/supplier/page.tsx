@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
 import InvoiceTable from "@/components/dashboard/InvoiceTable";
 import RecentActivity from "@/components/dashboard/RecentActivity";
@@ -8,61 +9,63 @@ import {
   HandCoins,
   BadgeCheck,
 } from "lucide-react";
+import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
 
 export default function SupplierPage() {
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold">
-            Supplier Dashboard
-          </h2>
+  <DashboardLayout>
+    <div className="space-y-6">
+      <PageHeader
+        title="Supplier Dashboard"
+        description="Monitor invoices, confidential bids, and settlement readiness."
+      />
 
-          <p className="mt-2 text-slate-500">
-            Monitor invoices, funding requests and settlements.
-          </p>
-        </div>
+      <WelcomeBanner />
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            title="Invoices"
-            value="24"
-            subtitle="Submitted"
-            icon={FileText}
-          />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Uploaded invoices"
+          value="24"
+          subtitle="3 ready for bids"
+          icon={FileText}
+        />
 
-          <StatCard
-            title="Funding Requests"
-            value="7"
-            subtitle="Active"
-            icon={HandCoins}
-          />
+        <StatCard
+          title="Confidential bids"
+          value="7"
+          subtitle="Across active invoices"
+          icon={HandCoins}
+        />
 
-          <StatCard
-            title="Funds Raised"
-            value="$1.25M"
-            subtitle="Total"
-            icon={Wallet}
-          />
+        <StatCard
+          title="Funds Raised"
+          value="$1.25M"
+          subtitle="Accepted financing"
+          icon={Wallet}
+        />
 
-          <StatCard
-            title="Settlement Rate"
-            value="100%"
-            subtitle="Completed"
-            icon={BadgeCheck}
-          />
-        </div>
+        <StatCard
+          title="Settlement Rate"
+          value="100%"
+          subtitle="Completed workflows"
+          icon={BadgeCheck}
+        />
+      </div>
 
-       <div>
-            <h3 className="mb-4 text-xl font-semibold">
-                Recent Invoices
+      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <section className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold">
+              Recent Invoices
             </h3>
+          </div>
 
-            <InvoiceTable />
-        </div>
+          <InvoiceTable />
+        </section>
 
         <RecentActivity />
       </div>
-    </DashboardLayout>
-  );
+    </div>
+  </DashboardLayout>
+);
 }

@@ -50,7 +50,7 @@ export default function Hero() {
 
             <div className="flex items-center gap-2">
               <Landmark className="h-4 w-4 text-green-600" />
-              DAML Smart Contracts
+              Canton-ready Workflow
             </div>
           </div>
         </div>

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  FileText,
   Upload,
   HandCoins,
-  Settings,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const links = [
   {
@@ -16,25 +16,22 @@ const links = [
     icon: LayoutDashboard,
   },
   {
-    title: "Invoices",
-    href: "/supplier/invoices",
-    icon: FileText,
-  },
-  {
-    title: "Upload Invoice",
+    title: "Upload",
     href: "/supplier/upload",
     icon: Upload,
   },
   {
-    title: "Funding Requests",
-    href: "/supplier/requests",
+    title: "Marketplace",
+    href: "/supplier/marketplace",
     icon: HandCoins,
   },
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
-    <aside className="sticky top-0 flex h-screen w-64 flex-col border-r bg-white">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-white lg:flex">
       <div className="border-b p-6">
         <h2 className="text-2xl font-bold text-violet-700">
           <Link href="/">
@@ -50,12 +47,16 @@ export default function Sidebar() {
       <nav className="flex-1 space-y-2 p-4">
         {links.map((link) => {
           const Icon = link.icon;
+          const isActive = pathname === link.href;
 
           return (
             <Link
               key={link.title}
               href={link.href}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-violet-50 hover:text-violet-700"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950",
+                isActive && "bg-slate-950 text-white hover:bg-slate-950 hover:text-white"
+              )}
             >
               <Icon size={20} />
               {link.title}
@@ -65,10 +66,9 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t p-4">
-        <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-600 hover:bg-slate-100">
-          <Settings size={18} />
-          Settings
-        </button>
+        <p className="rounded-lg bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+          Demo mode: DAML integration is queued after the checkpoint.
+        </p>
       </div>
     </aside>
   );

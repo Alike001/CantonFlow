@@ -2,8 +2,8 @@ import { mockActivity } from "@/data/mockActivity";
 
 export default function RecentActivity() {
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <h3 className="mb-6 text-xl font-semibold">
+    <aside className="rounded-lg border bg-white p-5 shadow-sm">
+      <h3 className="mb-5 text-lg font-semibold">
         Recent Activity
       </h3>
 
@@ -11,9 +11,9 @@ export default function RecentActivity() {
         {mockActivity.map((activity) => (
           <div
             key={activity.id}
-            className="border-l-2 border-violet-600 pl-4"
+            className="border-l-2 border-slate-300 pl-4"
           >
-            <p className="font-medium">
+            <p className="text-sm font-medium text-slate-950">
               {activity.title}
             </p>
 
@@ -27,6 +27,6 @@ export default function RecentActivity() {
           </div>
         ))}
       </div>
-    </div>
+    </aside>
   );
 }
