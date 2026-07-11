@@ -1,0 +1,67 @@
+module CantonFlowTest where
+
+import CantonFlow
+import Daml.Script
+import DA.Date
+import DA.Time
+
+testReceivablesRfqLifecycle : Script ()
+testReceivablesRfqLifecycle = script do
+  supplier <- allocatePartyWithHint "supplier" (PartyIdHint "supplier")
+  buyer <- allocatePartyWithHint "buyer" (PartyIdHint "buyer")
+  regulator <- allocatePartyWithHint "regulator" (PartyIdHint "regulator")
+  lender <- allocatePartyWithHint "lender" (PartyIdHint "lender")
+  let due = date 2026 Aug 30
+  let submitted = time (date 2026 Jul 11) 9 0 0
+  let accepted = time (date 2026 Jul 11) 9 5 0
+  let prepared = time (date 2026 Jul 11) 9 10 0
+  let settled = time (date 2026 Jul 11) 9 15 0
+
+  invoiceRequest <- supplier `submit` createCmd InvoiceRequest with
+      supplier
+      buyer
+      regulator
+      invoiceId = "receivable-001"
+      invoiceNumber = "INV-2026-004"
+      buyerProfile = "Investment-grade manufacturing buyer"
+      amount = 320000.0
+      currency = "USD"
+      dueDate = due
+      requestedAdvance = 252000.0
+      minimumDiscountRate = 4.5
+      visibility = VisibilityPolicy with
+        buyerVisibleToLenders = False
+        invoicePdfVisibleToLenders = False
+        regulatorCanSeeCommercialTerms = False
+
+  invite <- submit supplier do
+    exerciseCmd invoiceRequest InviteLender with
+      lender = lender
+
+  fundingBid <- submit lender do
+    createCmd FundingBid with
+      supplier = supplier
+      lender = lender
+      regulator = regulator
+      invoiceId = "receivable-001"
+      invoiceNumber = "INV-2026-004"
+      advanceAmount = 252000.0
+      discountRate = 4.9
+      settlementDays = 61
+      lenderNote = "Can settle quickly after invoice verification."
+      submittedAt = submitted
+
+  agreement <- submit supplier do
+    exerciseCmd fundingBid AcceptBid with
+      acceptedAt = accepted
+
+  settlement <- submitMulti [supplier, lender] [] do
+    exerciseCmd agreement PrepareSettlement with
+      settlementReference = "cantonflow-settlement-001"
+      preparedAt = prepared
+
+  submitMulti [supplier, lender] [] do
+    exerciseCmd settlement MarkSettled with
+      settledAt = settled
+
+  pure ()

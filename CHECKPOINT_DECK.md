@@ -10,7 +10,7 @@ Encode Club x Canton Foundation Build on Canton Hackathon
 
 SMEs need faster access to working capital, but invoice financing exposes sensitive commercial data: buyers, invoice documents, rates, lender appetite, and supplier cash-flow pressure.
 
-Traditional public-chain lending demos are not credible for this workflow because institutions cannot expose deal terms to the market.
+Traditional public-chain lending flows are not credible for this workflow because institutions cannot expose deal terms to the market.
 
 ## 3. Solution
 
@@ -28,15 +28,15 @@ Canton is the right infrastructure because the product depends on:
 - Institutional privacy
 - Atomic settlement
 
-The demo is designed around those strengths instead of generic crypto wallet behavior.
+The product is designed around those strengths instead of generic crypto wallet behavior.
 
-## 5. Demo Flow
+## 5. Product Flow
 
 1. Landing page: explain the privacy-first invoice financing use case.
 2. Supplier dashboard: show invoice pipeline, confidential bids, and settlement activity.
 3. Upload invoice: submit a financing request with validation.
 4. Marketplace: show private lender offers where competing lenders cannot see each other.
-5. Close: explain the post-checkpoint Canton/DAML integration path.
+5. Close: show the Canton Daml lifecycle and DevNet deployment path.
 
 ## 6. What Works Today
 
@@ -44,13 +44,17 @@ The demo is designed around those strengths instead of generic crypto wallet beh
 - Supplier dashboard
 - Upload invoice flow with validation
 - Confidential marketplace screen
+- Lender bid submission workflow
+- Supplier bid acceptance state
+- Regulator metadata-only view
+- DAML contract model for the workflow lifecycle
 - Navigation across all live routes
 - Production build passes
 
 ## 7. Judge Alignment
 
 Technical execution:
-The app builds successfully, uses a clean Next.js structure, and keeps reusable dashboard components.
+The app builds successfully, uses a clean Next.js structure, keeps reusable dashboard components, and includes a DAML contract model for the Canton workflow.
 
 Originality:
 The focus is private invoice financing with confidential lender competition, not a generic token dashboard.
@@ -63,8 +67,7 @@ Invoice financing is a real trade finance need where privacy materially matters.
 
 ## 8. Next Milestones
 
-- DAML contract model for invoice financing lifecycle
-- Canton participant workflow simulation
-- Role-specific supplier and lender views
-- Bid acceptance and atomic settlement flow
-- Live deployment and 3-minute demo video
+- Deploy the compiled Daml package to Canton DevNet
+- Connect frontend actions to the DAML JSON API
+- Add invoice detail visibility matrix
+- Live deployment and 3-minute product video

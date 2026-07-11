@@ -23,9 +23,9 @@ export default function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            <Link href="/supplier">
+            <Link href="/sign-in">
               <Button size="lg">
-                Launch Demo
+                Launch Product
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>

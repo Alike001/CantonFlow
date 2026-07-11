@@ -67,7 +67,7 @@ export default function Sidebar() {
 
       <div className="border-t p-4">
         <p className="rounded-lg bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
-          Demo mode: DAML integration is queued after the checkpoint.
+          Canton lifecycle: request, private bid, agreement, settlement.
         </p>
       </div>
     </aside>

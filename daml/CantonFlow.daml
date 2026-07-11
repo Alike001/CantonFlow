@@ -1,0 +1,186 @@
+module CantonFlow where
+
+type InvoiceId = Text
+type Currency = Text
+
+data InvoiceStatus
+  = FundingOpen
+  | BidAccepted
+  | SettlementReady
+  | Settled
+  deriving (Eq, Show)
+
+data VisibilityPolicy = VisibilityPolicy
+  with
+    buyerVisibleToLenders : Bool
+    invoicePdfVisibleToLenders : Bool
+    regulatorCanSeeCommercialTerms : Bool
+  deriving (Eq, Show)
+
+template InvoiceRequest
+  with
+    supplier : Party
+    buyer : Party
+    regulator : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    buyerProfile : Text
+    amount : Decimal
+    currency : Currency
+    dueDate : Date
+    requestedAdvance : Decimal
+    minimumDiscountRate : Decimal
+    visibility : VisibilityPolicy
+  where
+    signatory supplier
+    observer buyer, regulator
+
+    choice InviteLender : ContractId LenderInvite
+      with
+        lender : Party
+      controller supplier
+      do
+        create LenderInvite with
+          supplier
+          buyer
+          regulator
+          lender
+          invoiceId
+          invoiceNumber
+          buyerProfile
+          amount
+          currency
+          dueDate
+          requestedAdvance
+          minimumDiscountRate
+
+template LenderInvite
+  with
+    supplier : Party
+    buyer : Party
+    regulator : Party
+    lender : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    buyerProfile : Text
+    amount : Decimal
+    currency : Currency
+    dueDate : Date
+    requestedAdvance : Decimal
+    minimumDiscountRate : Decimal
+  where
+    signatory supplier
+    observer lender, regulator
+
+    nonconsuming choice SubmitFundingBid : ContractId FundingBid
+      with
+        advanceAmount : Decimal
+        discountRate : Decimal
+        settlementDays : Int
+        lenderNote : Text
+        submittedAt : Time
+      controller lender
+      do
+        assertMsg "Advance amount must be positive" (advanceAmount > 0.0)
+        assertMsg "Discount rate must be positive" (discountRate > 0.0)
+        create FundingBid with
+          supplier
+          lender
+          regulator
+          invoiceId
+          invoiceNumber
+          advanceAmount
+          discountRate
+          settlementDays
+          lenderNote
+          submittedAt
+
+template FundingBid
+  with
+    supplier : Party
+    lender : Party
+    regulator : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    advanceAmount : Decimal
+    discountRate : Decimal
+    settlementDays : Int
+    lenderNote : Text
+    submittedAt : Time
+  where
+    signatory lender
+    observer supplier
+
+    choice AcceptBid : ContractId FundingAgreement
+      with
+        acceptedAt : Time
+      controller supplier
+      do
+        create FundingAgreement with
+          supplier
+          lender
+          regulator
+          invoiceId
+          invoiceNumber
+          advanceAmount
+          discountRate
+          settlementDays
+          acceptedAt
+          status = BidAccepted
+
+template FundingAgreement
+  with
+    supplier : Party
+    lender : Party
+    regulator : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    advanceAmount : Decimal
+    discountRate : Decimal
+    settlementDays : Int
+    acceptedAt : Time
+    status : InvoiceStatus
+  where
+    signatory supplier, lender
+    observer regulator
+
+    choice PrepareSettlement : ContractId SettlementInstruction
+      with
+        settlementReference : Text
+        preparedAt : Time
+      controller supplier, lender
+      do
+        create SettlementInstruction with
+          supplier
+          lender
+          regulator
+          invoiceId
+          invoiceNumber
+          advanceAmount
+          settlementReference
+          preparedAt
+          status = SettlementReady
+
+template SettlementInstruction
+  with
+    supplier : Party
+    lender : Party
+    regulator : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    advanceAmount : Decimal
+    settlementReference : Text
+    preparedAt : Time
+    status : InvoiceStatus
+  where
+    signatory supplier, lender
+    observer regulator
+
+    choice MarkSettled : ContractId SettlementInstruction
+      with
+        settledAt : Time
+      controller supplier, lender
+      do
+        create this with
+          status = Settled
+          preparedAt = settledAt

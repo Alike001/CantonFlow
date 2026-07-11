@@ -23,8 +23,8 @@ export default function CTA() {
             variant="secondary"
             className="rounded-full"
           >
-            <Link href="/supplier">
-              Launch Demo
+            <Link href="/sign-in">
+              Launch Product
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

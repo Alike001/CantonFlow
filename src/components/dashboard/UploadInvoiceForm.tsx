@@ -88,8 +88,8 @@ export default function UploadInvoiceForm() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                This checkpoint demo validates the invoice and prepares it for a
-                confidential lender marketplace.
+                This workflow validates the receivable and prepares it for a
+                confidential lender RFQ.
               </p>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -200,7 +200,7 @@ export default function UploadInvoiceForm() {
                   <p className="font-medium">Invoice submitted for confidential bidding.</p>
                   <p className="mt-1 text-emerald-800">
                     Eligible lenders can now receive selectively disclosed deal
-                    terms in the marketplace demo.
+                    terms in the marketplace.
                   </p>
                 </div>
               </div>

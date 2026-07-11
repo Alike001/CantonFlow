@@ -59,9 +59,9 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Link href="/supplier">
+        <Link href="/sign-in">
           <Button className="rounded-full">
-            Launch Demo
+            Launch Product
           </Button>
         </Link>
       </div>

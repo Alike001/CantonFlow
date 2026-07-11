@@ -10,7 +10,7 @@ export default function WelcomeBanner() {
       <CardContent className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm font-medium text-emerald-300">
-            Checkpoint demo flow
+            Product workflow
           </p>
 
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">

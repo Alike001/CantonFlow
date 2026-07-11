@@ -17,7 +17,7 @@ export default function SupplierPage() {
     <div className="space-y-6">
       <PageHeader
         title="Supplier Dashboard"
-        description="Monitor invoices, confidential bids, and settlement readiness."
+        description="Monitor invoices, confidential bids, and settlement readiness from the supplier workspace."
       />
 
       <WelcomeBanner />

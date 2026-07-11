@@ -2,18 +2,20 @@
 
 ## Before Final Submission
 
+- Deploy CantonFlow Daml contracts to Canton DevNet.
+- Capture DevNet proof: package ID, update IDs, and screenshots.
 - Deploy live product and add the URL to the README.
-- Record the 3-minute pitch/demo video.
-- Add role-specific lender view for submitting confidential offers.
+- Record the 3-minute pitch/product video.
+- Connect frontend actions to the DAML JSON API.
 - Add invoice detail page with visibility rules.
 - Add basic test coverage for upload validation and route rendering.
 
 ## Canton Integration
 
-- Model invoice lifecycle in DAML.
-- Define parties: supplier, lender, buyer, regulator/observer.
-- Implement confidential bid submission.
-- Implement bid acceptance and funding agreement creation.
+- Deploy the compiled DAR to Canton DevNet.
+- Execute invoice request, lender bid, acceptance, and settlement commands on-ledger.
+- Generate or hand-write a JSON API client for the Next.js app.
+- Replace browser-side bid adapter with DAML-backed commands.
 - Simulate or connect atomic settlement workflow.
 
 ## Product Polish
@@ -22,9 +24,9 @@
 - Add mobile QA screenshots.
 - Improve copy around compliance and audit visibility.
 - Add a short architecture diagram to the deck.
-- Replace mock data with a small typed demo data layer.
+- Replace static seed data with ledger-backed read models.
 
-## Demo Narrative
+## Product Narrative
 
 - Lead with the pain: public invoice financing leaks sensitive commercial data.
 - Show upload and marketplace.
