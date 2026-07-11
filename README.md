@@ -83,3 +83,8 @@ See [docs/CANTON_ARCHITECTURE.md](./docs/CANTON_ARCHITECTURE.md).
 ## Canton DevNet Deployment
 
 Final qualification requires the Daml contracts to run on Canton DevNet. See [docs/DEVNET_DEPLOYMENT.md](./docs/DEVNET_DEPLOYMENT.md).
+
+The app now includes server-side Canton JSON API routes for DevNet readiness and `InvoiceRequest` submission:
+
+- `GET /api/canton/status`
+- `POST /api/canton/invoice-requests`

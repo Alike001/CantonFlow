@@ -117,6 +117,11 @@ Generate an OAuth2 token according to your Keycloak/validator setup and set:
 ```bash
 LEDGER_API_TOKEN=...
 JSON_LEDGER_API_URL=http://json-ledger-api.localhost:8080
+CANTONFLOW_PACKAGE_ID=<main package id from inspect-dar>
+CANTONFLOW_SUPPLIER_PARTY=<supplier party>
+CANTONFLOW_BUYER_PARTY=<buyer party>
+CANTONFLOW_REGULATOR_PARTY=<regulator party>
+CANTONFLOW_LENDER_PARTY=<lender party>
 DAR_PATH=.daml/dist/cantonflow-0.1.0.dar
 ```
 
@@ -127,6 +132,40 @@ bash scripts/upload-dar-devnet.sh
 ```
 
 Successful upload should return `{}` or an equivalent successful package upload response.
+
+## App JSON API Integration
+
+The Next.js app includes server-side Canton routes. They do not use browser tokens.
+
+Check whether required DevNet environment is configured:
+
+```bash
+curl http://localhost:3000/api/canton/status
+```
+
+Submit an `InvoiceRequest` to DevNet through the app server:
+
+```bash
+curl -X POST http://localhost:3000/api/canton/invoice-requests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "invoiceId": "receivable-001",
+    "invoiceNumber": "INV-2026-004",
+    "buyerProfile": "Investment-grade manufacturing buyer",
+    "amount": "320000.0",
+    "currency": "USD",
+    "dueDate": "2026-08-30",
+    "requestedAdvance": "252000.0",
+    "minimumDiscountRate": "4.5",
+    "visibility": {
+      "buyerVisibleToLenders": false,
+      "invoicePdfVisibleToLenders": false,
+      "regulatorCanSeeCommercialTerms": false
+    }
+  }'
+```
+
+Successful submission returns the DevNet `updateId` and `completionOffset`.
 
 ## On-Ledger Proof We Need For Submission
 

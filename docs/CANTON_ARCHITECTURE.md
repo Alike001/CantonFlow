@@ -56,7 +56,7 @@ This workflow is a strong fit for Canton because invoice financing requires priv
 - `/supplier/marketplace`: maps to `FundingBid` and `AcceptBid`.
 - `/regulator`: maps to regulator observer visibility.
 
-The product code currently uses a browser-side state adapter for local interaction while the Daml package is compiled and deployed. The production integration replaces that adapter with Daml JSON API commands for the same lifecycle.
+The app includes a server-side Canton JSON API adapter under `src/lib/canton` and route handlers under `/api/canton`. Browser code does not hold ledger tokens. The remaining integration work is wiring the existing supplier/lender screens to those server routes after DevNet parties and OAuth tokens are available.
 
 ## Verification
 
