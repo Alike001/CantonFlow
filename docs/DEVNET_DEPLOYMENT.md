@@ -227,6 +227,26 @@ npm run dev
 curl http://localhost:3000/api/canton/status
 ```
 
+## Local On-Ledger Proof Captured
+
+The local Canton sandbox flow has been executed through the app server routes. This proves the Daml package and JSON API integration work before DevNet deployment.
+
+Package ID:
+
+```text
+d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
+```
+
+| Step | API route | Update ID | Offset |
+| --- | --- | --- | --- |
+| `InvoiceRequest` created | `/api/canton/invoice-requests` | `122097e25256a541f06c27ce4da57babb80ef6eb48161c5cc5b8fa867df5b8ab16b5` | `17` |
+| `LenderInvite` created | `/api/canton/invites` | `12200d4bb126c762a3b48197db2ab7e7aaf7a0458c13c264a95ec2aa2bce34036939` | `20` |
+| `FundingBid` submitted | `/api/canton/bids` | `1220be6483f710f7d6dd1a88f22f9c3ab5de348dd3c393ef7fa76cc60d3d04743005` | `23` |
+| `FundingAgreement` accepted | `/api/canton/agreements` | `122079df4bcb87e3e14ae5dda290c3101a128c1ddf425c5f9950695c67d69fe84139` | `26` |
+| `SettlementInstruction` prepared | `/api/canton/settlements` | `12209626362a513904a03fee188d79ec1e8e3d1fec2b2d2254dd652cf25ab02e06e0` | `29` |
+
+The same route sequence should be repeated against the Seaport shared DevNet validator after org access is enabled. Replace the local update IDs with DevNet update IDs in the final submission.
+
 ## On-Ledger Proof We Need For Submission
 
 Capture these artifacts:

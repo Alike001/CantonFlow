@@ -72,6 +72,28 @@ npm run build
 HOME=$PWD/.home .tools/dpm/dpm build
 ```
 
+## Local On-Ledger Proof
+
+CantonFlow has been executed end to end on a local Canton sandbox through the app's server-side JSON API routes.
+
+Package ID:
+
+```text
+d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
+```
+
+Local ledger execution:
+
+| Step | Update ID | Offset |
+| --- | --- | --- |
+| `InvoiceRequest` created | `122097e25256a541f06c27ce4da57babb80ef6eb48161c5cc5b8fa867df5b8ab16b5` | `17` |
+| `LenderInvite` created | `12200d4bb126c762a3b48197db2ab7e7aaf7a0458c13c264a95ec2aa2bce34036939` | `20` |
+| `FundingBid` submitted | `1220be6483f710f7d6dd1a88f22f9c3ab5de348dd3c393ef7fa76cc60d3d04743005` | `23` |
+| `FundingAgreement` accepted | `122079df4bcb87e3e14ae5dda290c3101a128c1ddf425c5f9950695c67d69fe84139` | `26` |
+| `SettlementInstruction` prepared | `12209626362a513904a03fee188d79ec1e8e3d1fec2b2d2254dd652cf25ab02e06e0` | `29` |
+
+DevNet proof will replace the local proof after Seaport shared-validator access is enabled for the project wallet.
+
 ## Remaining Milestones
 
 See [MILESTONES.md](./MILESTONES.md).

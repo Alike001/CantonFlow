@@ -12,9 +12,9 @@
 
 ## Canton Integration
 
+- Repeat the verified local ledger flow on the Seaport shared DevNet validator.
 - Deploy the compiled DAR to Canton DevNet.
-- Execute invoice request, lender bid, acceptance, and settlement commands on-ledger.
-- Generate or hand-write a JSON API client for the Next.js app.
+- Capture DevNet update IDs for invoice request, lender invite, funding bid, agreement, and settlement.
 - Replace browser-side bid adapter with DAML-backed commands.
 - Simulate or connect atomic settlement workflow.
 

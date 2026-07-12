@@ -6,6 +6,7 @@ interface SubmitAndWaitRequest {
   commands: JsonObject[];
   workflowId: string;
   applicationId: string;
+  userId: string;
   commandId: string;
   deduplicationPeriod: { Empty: Record<string, never> };
   actAs: string[];
@@ -62,6 +63,7 @@ export async function submitAndWait(
     commands: params.commands,
     workflowId: params.workflowId,
     applicationId: config.applicationId,
+    userId: config.userId,
     commandId,
     deduplicationPeriod: { Empty: {} },
     actAs: params.actAs,

@@ -2,6 +2,7 @@ export interface CantonConfig {
   applicationId: string;
   jsonLedgerApiUrl: string;
   ledgerApiToken: string;
+  userId: string;
   packageId: string;
   parties: {
     supplier: string;
@@ -44,6 +45,7 @@ export function getCantonConfig(): CantonConfig {
     applicationId: process.env.CANTONFLOW_APPLICATION_ID || "cantonflow",
     jsonLedgerApiUrl: process.env.JSON_LEDGER_API_URL!,
     ledgerApiToken: process.env.LEDGER_API_TOKEN || "",
+    userId: process.env.CANTONFLOW_USER_ID || "supplier",
     packageId: process.env.CANTONFLOW_PACKAGE_ID!,
     parties: {
       supplier: process.env.CANTONFLOW_SUPPLIER_PARTY!,

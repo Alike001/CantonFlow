@@ -48,6 +48,8 @@ The product is designed around those strengths instead of generic crypto wallet 
 - Supplier bid acceptance state
 - Regulator metadata-only view
 - DAML contract model for the workflow lifecycle
+- Local Canton sandbox execution through JSON API routes
+- On-ledger local update IDs captured for invoice request, lender invite, bid, agreement, and settlement
 - Navigation across all live routes
 - Production build passes
 
@@ -68,6 +70,6 @@ Invoice financing is a real trade finance need where privacy materially matters.
 ## 8. Next Milestones
 
 - Deploy the compiled Daml package to Canton DevNet
-- Connect frontend actions to the DAML JSON API
+- Repeat the local JSON API flow on the Seaport shared DevNet validator
 - Add invoice detail visibility matrix
 - Live deployment and 3-minute product video

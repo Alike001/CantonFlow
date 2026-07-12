@@ -12,13 +12,20 @@ data CantonFlowParties = CantonFlowParties
 
 setupParties : Script CantonFlowParties
 setupParties = script do
-  supplier <- allocatePartyByHint (PartyIdHint "supplier")
-  buyer <- allocatePartyByHint (PartyIdHint "buyer")
-  regulator <- allocatePartyByHint (PartyIdHint "regulator")
-  lender <- allocatePartyByHint (PartyIdHint "lender")
+  supplier <- createParty "supplier"
+  buyer <- createParty "buyer"
+  regulator <- createParty "regulator"
+  lender <- createParty "lender"
 
   pure CantonFlowParties with
     supplier
     buyer
     regulator
     lender
+
+createParty : Text -> Script Party
+createParty name = do
+  party <- allocatePartyByHint (PartyIdHint name)
+  userId <- validateUserId name
+  createUser (User userId (Some party)) [CanActAs party]
+  pure party
