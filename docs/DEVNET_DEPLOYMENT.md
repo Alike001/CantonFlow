@@ -26,15 +26,15 @@ Not done yet:
 
 ## Required External Access
 
-You need:
+For the hackathon, the expected path is the provided Seaport/shared validator flow. You need:
 
-- DevNet validator request approved.
-- VPN credentials for the sponsoring validator / SV.
-- DevNet onboarding secret.
-- Working Docker setup for the validator stack.
-- OAuth2 token with package upload/admin rights.
+- Your Canton Loop DevNet wallet party added to the hackathon Seaport org.
+- Access to the provided DevNet validator in Seaport.
+- The JSON Ledger API URL / upload path exposed by that validator flow.
+- Party IDs for the CantonFlow workflow roles.
+- An OAuth2 token if the selected DevNet JSON API requires one for package upload or command submission.
 
-The official DevNet guide says the validator request starts at:
+Operating your own validator is not required for the product build. Use the validator request route only if the organizers specifically tell you to operate a validator yourself:
 
 ```text
 https://canton.foundation/apply-to-set-up-a-validator-node/
@@ -65,7 +65,7 @@ Expected output:
 
 ## DevNet Validator Setup Summary
 
-Follow the official DevNet quickstart guide. The key steps are:
+If using Seaport, deploy through the shared validator UI after the admin adds your Loop wallet party to the org. If you are instructed to operate your own validator, follow the official DevNet quickstart guide. The key steps are:
 
 1. Add host entries:
 
@@ -103,6 +103,18 @@ echo "$ONBOARDING_SECRET"
 ```
 
 5. Start the validator using the official `splice-node/docker-compose/validator/start.sh`.
+
+## Seaport Shared Validator Summary
+
+Use this when the hackathon admin confirms your Loop wallet party has been added to the org.
+
+1. Open `https://app.devnet.seaport.to`.
+2. Log in with the Canton Loop DevNet wallet.
+3. Switch to the hackathon org/team.
+4. Select the provided validator, commonly referenced as `5n sandbox`.
+5. Import or create the CantonFlow Daml project.
+6. Deploy the compiled CantonFlow DAR.
+7. Capture deployment proof, package ID, and transaction/update evidence.
 
 ## Upload CantonFlow DAR
 
@@ -166,6 +178,54 @@ curl -X POST http://localhost:3000/api/canton/invoice-requests \
 ```
 
 Successful submission returns the DevNet `updateId` and `completionOffset`.
+
+Additional server-side workflow routes:
+
+- `POST /api/canton/invites`
+- `POST /api/canton/bids`
+- `POST /api/canton/agreements`
+- `POST /api/canton/settlements`
+
+These require the relevant contract IDs returned or queried after the previous ledger step.
+
+## Local Ledger Proof Path
+
+This is the path to keep building while waiting for Seaport org access. It uses the same DAR and JSON API style as DevNet.
+
+Prerequisite: Java must be installed and available as `java`.
+
+Start local Canton sandbox with the CantonFlow DAR and JSON API:
+
+```bash
+bash scripts/start-local-ledger.sh
+```
+
+In another terminal, allocate local parties:
+
+```bash
+bash scripts/setup-local-parties.sh
+cat tmp/cantonflow-local-parties.json
+```
+
+Create a local app env from `.env.devnet.example`:
+
+```env
+JSON_LEDGER_API_URL=http://localhost:7575
+LEDGER_API_TOKEN=
+CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API=true
+CANTONFLOW_PACKAGE_ID=d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
+CANTONFLOW_SUPPLIER_PARTY=<supplier from tmp/cantonflow-local-parties.json>
+CANTONFLOW_BUYER_PARTY=<buyer from tmp/cantonflow-local-parties.json>
+CANTONFLOW_REGULATOR_PARTY=<regulator from tmp/cantonflow-local-parties.json>
+CANTONFLOW_LENDER_PARTY=<lender from tmp/cantonflow-local-parties.json>
+```
+
+Then run:
+
+```bash
+npm run dev
+curl http://localhost:3000/api/canton/status
+```
 
 ## On-Ledger Proof We Need For Submission
 

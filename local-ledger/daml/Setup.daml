@@ -1,0 +1,24 @@
+module Setup where
+
+import Daml.Script
+
+data CantonFlowParties = CantonFlowParties
+  with
+    supplier : Party
+    buyer : Party
+    regulator : Party
+    lender : Party
+  deriving (Eq, Show)
+
+setupParties : Script CantonFlowParties
+setupParties = script do
+  supplier <- allocatePartyByHint (PartyIdHint "supplier")
+  buyer <- allocatePartyByHint (PartyIdHint "buyer")
+  regulator <- allocatePartyByHint (PartyIdHint "regulator")
+  lender <- allocatePartyByHint (PartyIdHint "lender")
+
+  pure CantonFlowParties with
+    supplier
+    buyer
+    regulator
+    lender

@@ -19,6 +19,7 @@ interface SubmitAndWaitRequest {
 export interface SubmitAndWaitResponse {
   updateId: string;
   completionOffset: number | string;
+  [key: string]: unknown;
 }
 
 export function buildCreateCommand(templateId: string, createArguments: JsonObject) {
@@ -71,14 +72,19 @@ export async function submitAndWait(
     packageIdSelectionPreference: [],
   };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (config.ledgerApiToken) {
+    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
+  }
+
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/commands/submit-and-wait`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.ledgerApiToken}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(payload),
       cache: "no-store",
     },

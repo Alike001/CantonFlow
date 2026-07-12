@@ -13,7 +13,6 @@ export interface CantonConfig {
 
 const REQUIRED_ENV = [
   "JSON_LEDGER_API_URL",
-  "LEDGER_API_TOKEN",
   "CANTONFLOW_PACKAGE_ID",
   "CANTONFLOW_SUPPLIER_PARTY",
   "CANTONFLOW_BUYER_PARTY",
@@ -22,7 +21,16 @@ const REQUIRED_ENV = [
 ] as const;
 
 export function getMissingCantonEnv() {
-  return REQUIRED_ENV.filter((key) => !process.env[key]);
+  const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
+
+  if (
+    !process.env.LEDGER_API_TOKEN &&
+    process.env.CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API !== "true"
+  ) {
+    missing.push("LEDGER_API_TOKEN" as (typeof REQUIRED_ENV)[number]);
+  }
+
+  return missing;
 }
 
 export function getCantonConfig(): CantonConfig {
@@ -35,7 +43,7 @@ export function getCantonConfig(): CantonConfig {
   return {
     applicationId: process.env.CANTONFLOW_APPLICATION_ID || "cantonflow",
     jsonLedgerApiUrl: process.env.JSON_LEDGER_API_URL!,
-    ledgerApiToken: process.env.LEDGER_API_TOKEN!,
+    ledgerApiToken: process.env.LEDGER_API_TOKEN || "",
     packageId: process.env.CANTONFLOW_PACKAGE_ID!,
     parties: {
       supplier: process.env.CANTONFLOW_SUPPLIER_PARTY!,

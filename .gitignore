@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/tmp/
 
 # next.js
 /.next/
@@ -43,5 +44,6 @@ next-env.d.ts
 
 # local Daml tooling/cache
 /.daml/
+**/.daml/
 /.home/
 /.tools/

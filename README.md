@@ -88,3 +88,7 @@ The app now includes server-side Canton JSON API routes for DevNet readiness and
 
 - `GET /api/canton/status`
 - `POST /api/canton/invoice-requests`
+- `POST /api/canton/invites`
+- `POST /api/canton/bids`
+- `POST /api/canton/agreements`
+- `POST /api/canton/settlements`
