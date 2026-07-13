@@ -1,7 +1,11 @@
 export const DEMO_BIDS_STORAGE_KEY = "cantonflow:confidentialBids";
 export const ACCEPTED_BID_STORAGE_KEY = "cantonflow:acceptedBidId";
+export const FUNDING_AGREEMENT_PROOF_STORAGE_KEY = "cantonflow:fundingAgreementProof";
 export const FUNDING_AGREEMENT_STORAGE_KEY = "cantonflow:fundingAgreementContractId";
+export const FUNDING_BID_PROOF_STORAGE_KEY = "cantonflow:fundingBidProof";
+export const INVOICE_REQUEST_PROOF_STORAGE_KEY = "cantonflow:invoiceRequestProof";
 export const LENDER_INVITE_STORAGE_KEY = "cantonflow:lenderInviteContractId";
+export const LENDER_INVITE_PROOF_STORAGE_KEY = "cantonflow:lenderInviteProof";
 export const SETTLEMENT_PROOF_STORAGE_KEY = "cantonflow:settlementProof";
 
 export interface ConfidentialBid {

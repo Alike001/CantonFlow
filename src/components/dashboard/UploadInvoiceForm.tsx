@@ -14,7 +14,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LENDER_INVITE_STORAGE_KEY } from "@/data/demoBids";
+import {
+  INVOICE_REQUEST_PROOF_STORAGE_KEY,
+  LENDER_INVITE_PROOF_STORAGE_KEY,
+  LENDER_INVITE_STORAGE_KEY,
+} from "@/data/demoBids";
 import { invoiceSchema } from "@/lib/validations/invoice";
 
 type FormState = {
@@ -166,6 +170,14 @@ export default function UploadInvoiceForm() {
         window.localStorage.setItem(
           LENDER_INVITE_STORAGE_KEY,
           invitePayload.createdContractId,
+        );
+        window.localStorage.setItem(
+          INVOICE_REQUEST_PROOF_STORAGE_KEY,
+          JSON.stringify(payload),
+        );
+        window.localStorage.setItem(
+          LENDER_INVITE_PROOF_STORAGE_KEY,
+          JSON.stringify(invitePayload),
         );
       }
 

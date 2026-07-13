@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DEMO_BIDS_STORAGE_KEY,
+  FUNDING_BID_PROOF_STORAGE_KEY,
   LENDER_INVITE_STORAGE_KEY,
   type ConfidentialBid,
   formatCurrency,
@@ -135,6 +136,8 @@ export default function LenderBidWorkspace() {
 
       ledgerPayload = payload;
       setLedgerSubmission(payload);
+
+      window.localStorage.setItem(FUNDING_BID_PROOF_STORAGE_KEY, JSON.stringify(payload));
 
       const newBid: ConfidentialBid = {
         id: `lender-bid-${Date.now()}`,

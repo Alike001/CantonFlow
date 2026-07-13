@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ACCEPTED_BID_STORAGE_KEY,
   DEMO_BIDS_STORAGE_KEY,
+  FUNDING_AGREEMENT_PROOF_STORAGE_KEY,
   FUNDING_AGREEMENT_STORAGE_KEY,
   SETTLEMENT_PROOF_STORAGE_KEY,
   type ConfidentialBid,
@@ -105,6 +106,10 @@ export default function SupplierMarketplace() {
         setAgreementSubmission(payload);
 
         if (payload.createdContractId) {
+          window.localStorage.setItem(
+            FUNDING_AGREEMENT_PROOF_STORAGE_KEY,
+            JSON.stringify(payload),
+          );
           window.localStorage.setItem(
             FUNDING_AGREEMENT_STORAGE_KEY,
             payload.createdContractId,
