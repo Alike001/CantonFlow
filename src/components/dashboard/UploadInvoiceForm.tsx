@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LENDER_INVITE_STORAGE_KEY } from "@/data/demoBids";
 import { invoiceSchema } from "@/lib/validations/invoice";
 
 type FormState = {
@@ -30,6 +31,11 @@ type LedgerSubmission = {
   status?: string;
   updateId?: string;
   completionOffset?: string | number;
+  createdContractId?: string;
+  contractLookupWarning?: string;
+  inviteUpdateId?: string;
+  inviteCompletionOffset?: string | number;
+  lenderInviteContractId?: string;
 };
 
 const initialFormState: FormState = {
@@ -96,6 +102,10 @@ export default function UploadInvoiceForm() {
     setIsSubmitting(true);
 
     try {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(LENDER_INVITE_STORAGE_KEY);
+      }
+
       const response = await fetch("/api/canton/invoice-requests", {
         method: "POST",
         headers: {
@@ -124,7 +134,47 @@ export default function UploadInvoiceForm() {
         throw new Error(payload.error || "Invoice submission failed");
       }
 
-      setSubmission(payload);
+      if (!payload.createdContractId) {
+        throw new Error(
+          "InvoiceRequest was submitted, but the contract ID lookup did not complete. Query active contracts before inviting lenders.",
+        );
+      }
+
+      const inviteResponse = await fetch("/api/canton/invites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          invoiceRequestContractId: payload.createdContractId,
+        }),
+      });
+
+      const invitePayload = await inviteResponse.json();
+
+      if (!inviteResponse.ok) {
+        throw new Error(invitePayload.error || "Lender invite failed");
+      }
+
+      if (!invitePayload.createdContractId) {
+        throw new Error(
+          "LenderInvite was submitted, but the contract ID lookup did not complete. Query active contracts before lender bidding.",
+        );
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          LENDER_INVITE_STORAGE_KEY,
+          invitePayload.createdContractId,
+        );
+      }
+
+      setSubmission({
+        ...payload,
+        inviteUpdateId: invitePayload.updateId,
+        inviteCompletionOffset: invitePayload.completionOffset,
+        lenderInviteContractId: invitePayload.createdContractId,
+      });
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -257,11 +307,11 @@ export default function UploadInvoiceForm() {
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="font-medium">
-                    InvoiceRequest created on-ledger.
+                    InvoiceRequest created and lender invited on-ledger.
                   </p>
                   <p className="mt-1 text-emerald-800">
-                    The supplier party created a CantonFlow invoice request for
-                    confidential lender bidding.
+                    The supplier party created a CantonFlow invoice request and
+                    issued a selective-disclosure invite to the lender.
                   </p>
                   <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                     <div>
@@ -278,6 +328,38 @@ export default function UploadInvoiceForm() {
                       </dt>
                       <dd className="mt-1 font-mono text-emerald-950">
                         {submission.completionOffset || "Pending"}
+                      </dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        InvoiceRequest contract
+                      </dt>
+                      <dd className="mt-1 break-all font-mono text-emerald-950">
+                        {submission.createdContractId || "Pending"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        Invite update
+                      </dt>
+                      <dd className="mt-1 break-all font-mono text-emerald-950">
+                        {submission.inviteUpdateId || "Pending"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        Invite offset
+                      </dt>
+                      <dd className="mt-1 font-mono text-emerald-950">
+                        {submission.inviteCompletionOffset || "Pending"}
+                      </dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        LenderInvite contract
+                      </dt>
+                      <dd className="mt-1 break-all font-mono text-emerald-950">
+                        {submission.lenderInviteContractId || "Pending"}
                       </dd>
                     </div>
                   </dl>

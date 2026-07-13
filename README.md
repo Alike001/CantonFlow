@@ -25,7 +25,7 @@ Implemented:
 - Supplier dashboard with responsive layout
 - KPI cards, recent invoice table, and activity stream
 - Supplier dashboard ledger proof panel with local update IDs
-- Working upload invoice form with validation, ledger submission, and update ID display
+- Working upload invoice form with validation, ledger submission, lender invitation, and update ID display
 - Lender workspace for submitting confidential financing bids to the Canton JSON API route
 - Supplier marketplace for reviewing private offers, accepting ledger-backed bids, and preparing settlement instructions
 - DAML contract model for invoice requests, private bids, funding agreements, and settlement instructions
@@ -38,7 +38,7 @@ Implemented:
 2. Click `Launch Product`.
 3. Choose a role on the entry screen.
 4. Continue as Supplier to review the dashboard.
-5. Open `Upload` and submit the prefilled invoice form to the Canton JSON API route.
+5. Open `Upload` and submit the prefilled invoice form to create an `InvoiceRequest` and fresh `LenderInvite`.
 6. Open `Marketplace`.
 7. Switch to Lender and submit a confidential bid.
 8. Return as Supplier and accept the private offer.

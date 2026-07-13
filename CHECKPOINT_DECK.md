@@ -42,7 +42,7 @@ The product is designed around those strengths instead of generic crypto wallet 
 
 - Responsive landing page
 - Supplier dashboard
-- Upload invoice flow with validation and ledger update ID display
+- Upload invoice flow with validation, ledger update ID display, and automatic lender invite creation
 - Confidential marketplace screen
 - Lender bid submission workflow wired to the Canton JSON API route
 - Supplier bid acceptance workflow wired to the Canton JSON API route for ledger-backed offers

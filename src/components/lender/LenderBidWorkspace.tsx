@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   DEMO_BIDS_STORAGE_KEY,
+  LENDER_INVITE_STORAGE_KEY,
   type ConfidentialBid,
   formatCurrency,
 } from "@/data/demoBids";
@@ -44,8 +45,7 @@ const initialForm = {
   rate: "4.9",
   term: "61",
   note: "Can settle quickly after invoice verification.",
-  inviteContractId:
-    "0083a7049273f33ad09f265395b932a16da4d6c65d5f53ba84f8a939c6f4e81723ca12122012414e486b4df66c0bf3fb0af2b0e218c144cab979c1e76f2e969150fff620a5",
+  inviteContractId: "",
 };
 
 type LedgerSubmission = {
@@ -58,7 +58,14 @@ type LedgerSubmission = {
 
 export default function LenderBidWorkspace() {
   const [selectedInvoice, setSelectedInvoice] = useState(opportunities[0].invoice);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => {
+    if (typeof window === "undefined") return initialForm;
+
+    return {
+      ...initialForm,
+      inviteContractId: window.localStorage.getItem(LENDER_INVITE_STORAGE_KEY) || "",
+    };
+  });
   const [submittedBid, setSubmittedBid] = useState<ConfidentialBid | null>(() => {
     if (typeof window === "undefined") return null;
 
@@ -92,6 +99,11 @@ export default function LenderBidWorkspace() {
       return;
     }
 
+    if (!form.inviteContractId.trim()) {
+      setError("Upload an invoice as the supplier first so CantonFlow can create a fresh lender invite.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
     setLedgerError("");
@@ -100,31 +112,29 @@ export default function LenderBidWorkspace() {
     try {
       let ledgerPayload: LedgerSubmission | null = null;
 
-      if (form.inviteContractId.trim()) {
-        const response = await fetch("/api/canton/bids", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            lenderInviteContractId: form.inviteContractId.trim(),
-            advanceAmount: Number(form.advance).toFixed(1),
-            discountRate: Number(form.rate).toFixed(1),
-            settlementDays: Number(form.term),
-            lenderNote: form.note,
-            submittedAt: new Date().toISOString(),
-          }),
-        });
+      const response = await fetch("/api/canton/bids", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lenderInviteContractId: form.inviteContractId.trim(),
+          advanceAmount: Number(form.advance).toFixed(1),
+          discountRate: Number(form.rate).toFixed(1),
+          settlementDays: Number(form.term),
+          lenderNote: form.note,
+          submittedAt: new Date().toISOString(),
+        }),
+      });
 
-        const payload = await response.json();
+      const payload = await response.json();
 
-        if (!response.ok) {
-          throw new Error(payload.error || "Ledger bid submission failed");
-        }
-
-        ledgerPayload = payload;
-        setLedgerSubmission(payload);
+      if (!response.ok) {
+        throw new Error(payload.error || "Ledger bid submission failed");
       }
+
+      ledgerPayload = payload;
+      setLedgerSubmission(payload);
 
       const newBid: ConfidentialBid = {
         id: `lender-bid-${Date.now()}`,
@@ -299,8 +309,9 @@ export default function LenderBidWorkspace() {
                       }
                     />
                     <p className="text-xs leading-5 text-slate-500">
-                      Populated from the verified local ledger flow. Replace
-                      this with the DevNet invite contract ID after deployment.
+                      Populated after Supplier Upload creates a fresh
+                      LenderInvite. Replace this with the DevNet invite
+                      contract ID after deployment if testing manually.
                     </p>
                   </div>
 

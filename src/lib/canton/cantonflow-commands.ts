@@ -53,7 +53,7 @@ export async function createInvoiceRequestOnLedger(
   config: CantonConfig,
   input: CreateInvoiceRequestInput,
 ) {
-  return submitAndWait(config, {
+  const result = await submitAndWait(config, {
     workflowId: "cantonflow-invoice-request",
     commandIdPrefix: "invoice-request",
     actAs: [config.parties.supplier],
@@ -65,13 +65,35 @@ export async function createInvoiceRequestOnLedger(
       ),
     ],
   });
+
+  try {
+    const invoiceRequestTemplateId = cantonTemplateId(config, "InvoiceRequest");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      invoiceRequestTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "InvoiceRequest contract lookup failed",
+    };
+  }
 }
 
 export async function inviteLenderOnLedger(
   config: CantonConfig,
   input: { invoiceRequestContractId: string },
 ) {
-  return submitAndWait(config, {
+  const result = await submitAndWait(config, {
     workflowId: "cantonflow-invite-lender",
     commandIdPrefix: "invite-lender",
     actAs: [config.parties.supplier],
@@ -85,6 +107,28 @@ export async function inviteLenderOnLedger(
       ),
     ],
   });
+
+  try {
+    const lenderInviteTemplateId = cantonTemplateId(config, "LenderInvite");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      lenderInviteTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "LenderInvite contract lookup failed",
+    };
+  }
 }
 
 export async function submitFundingBidOnLedger(
