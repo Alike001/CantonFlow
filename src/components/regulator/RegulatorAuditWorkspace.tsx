@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -38,6 +38,30 @@ type AuditStep = {
   proof: LedgerProof | null;
 };
 
+type RegulatorSnapshot = {
+  proofs: {
+    invoice: LedgerProof | null;
+    invite: LedgerProof | null;
+    bid: LedgerProof | null;
+    agreement: LedgerProof | null;
+    settlement: LedgerProof | null;
+  };
+  acceptedBidId: string;
+  bids: ConfidentialBid[];
+};
+
+const emptySnapshot: RegulatorSnapshot = {
+  proofs: {
+    invoice: null,
+    invite: null,
+    bid: null,
+    agreement: null,
+    settlement: null,
+  },
+  acceptedBidId: "",
+  bids: [],
+};
+
 function readProof(key: string) {
   if (typeof window === "undefined") return null;
 
@@ -64,20 +88,41 @@ function readBids() {
   }
 }
 
+function readRegulatorSnapshot() {
+  if (typeof window === "undefined") {
+    return JSON.stringify(emptySnapshot);
+  }
+
+  return JSON.stringify({
+    proofs: {
+      invoice: readProof(INVOICE_REQUEST_PROOF_STORAGE_KEY),
+      invite: readProof(LENDER_INVITE_PROOF_STORAGE_KEY),
+      bid: readProof(FUNDING_BID_PROOF_STORAGE_KEY),
+      agreement: readProof(FUNDING_AGREEMENT_PROOF_STORAGE_KEY),
+      settlement: readProof(SETTLEMENT_PROOF_STORAGE_KEY),
+    },
+    acceptedBidId: window.localStorage.getItem(ACCEPTED_BID_STORAGE_KEY) || "",
+    bids: readBids(),
+  } satisfies RegulatorSnapshot);
+}
+
+function subscribeToStorage(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
 export default function RegulatorAuditWorkspace() {
-  const [proofs] = useState(() => ({
-    invoice: readProof(INVOICE_REQUEST_PROOF_STORAGE_KEY),
-    invite: readProof(LENDER_INVITE_PROOF_STORAGE_KEY),
-    bid: readProof(FUNDING_BID_PROOF_STORAGE_KEY),
-    agreement: readProof(FUNDING_AGREEMENT_PROOF_STORAGE_KEY),
-    settlement: readProof(SETTLEMENT_PROOF_STORAGE_KEY),
-  }));
-  const [acceptedBidId] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : window.localStorage.getItem(ACCEPTED_BID_STORAGE_KEY) || "",
+  const snapshot = useSyncExternalStore(
+    subscribeToStorage,
+    readRegulatorSnapshot,
+    () => JSON.stringify(emptySnapshot),
   );
-  const [bids] = useState(readBids);
+  const { proofs, acceptedBidId, bids } = useMemo(
+    () => JSON.parse(snapshot) as RegulatorSnapshot,
+    [snapshot],
+  );
 
   const auditSteps = useMemo<AuditStep[]>(
     () => [
