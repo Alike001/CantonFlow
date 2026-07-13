@@ -25,6 +25,7 @@ Implemented:
 - Supplier dashboard with responsive layout
 - KPI cards, recent invoice table, and activity stream
 - Supplier dashboard ledger proof panel with local update IDs
+- Canton environment badge for Local Sandbox, DevNet, or external validator status
 - Working upload invoice form with validation, ledger submission, lender invitation, and update ID display
 - Lender workspace for submitting confidential financing bids to the Canton JSON API route
 - Supplier marketplace for reviewing private offers, accepting ledger-backed bids, and preparing settlement instructions

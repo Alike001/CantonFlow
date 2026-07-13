@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import CantonEnvironmentBadge from "@/components/canton/CantonEnvironmentBadge";
 import {
   ACCEPTED_BID_STORAGE_KEY,
   DEMO_BIDS_STORAGE_KEY,
@@ -181,6 +182,8 @@ export default function RegulatorAuditWorkspace() {
             </Link>
           </Button>
         </div>
+
+        <CantonEnvironmentBadge />
 
         <div className="grid gap-4 md:grid-cols-3">
           <Metric label="Lifecycle status" value={`${completedSteps}/5`} />

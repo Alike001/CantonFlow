@@ -1,5 +1,7 @@
 import { CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
 
+import CantonEnvironmentBadge from "@/components/canton/CantonEnvironmentBadge";
+
 const packageId =
   "d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0";
 
@@ -44,10 +46,7 @@ export default function LedgerProofPanel() {
           </h3>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Verified
-        </span>
+        <CantonEnvironmentBadge />
       </div>
 
       <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-3">

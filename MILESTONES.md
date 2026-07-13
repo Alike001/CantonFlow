@@ -20,7 +20,7 @@
 
 ## Product Polish
 
-- Add DevNet/local environment switch label to the ledger proof panel.
+- Replace local proof IDs with DevNet proof IDs after Seaport access is enabled.
 - Add empty/loading/error states across dashboard tables.
 - Add mobile QA screenshots.
 - Improve copy around compliance and audit visibility.

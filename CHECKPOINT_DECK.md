@@ -52,6 +52,7 @@ The product is designed around those strengths instead of generic crypto wallet 
 - Local Canton sandbox execution through JSON API routes
 - On-ledger local update IDs captured for invoice request, lender invite, bid, agreement, and settlement
 - Dashboard ledger proof panel for judge-visible protocol evidence
+- Canton environment badge showing Local Sandbox or DevNet status
 - Navigation across all live routes
 - Production build passes
 
