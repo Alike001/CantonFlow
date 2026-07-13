@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await createInvoiceRequestOnLedger(
-      getCantonConfig(),
+      getCantonConfig("supplier"),
       parsed.data,
     );
 

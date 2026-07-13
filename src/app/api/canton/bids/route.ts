@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await submitFundingBidOnLedger(getCantonConfig(), parsed.data);
+    const result = await submitFundingBidOnLedger(getCantonConfig("lender"), parsed.data);
     return NextResponse.json({ status: "submitted", ...result });
   } catch (error) {
     return NextResponse.json(

@@ -23,6 +23,39 @@ export interface SubmitAndWaitResponse {
   [key: string]: unknown;
 }
 
+interface ActiveContractsRequest {
+  filter: {
+    filtersByParty: Record<string, never>;
+    filtersForAnyParty: {
+      cumulative: Array<{
+        identifierFilter: {
+          WildcardFilter: {
+            value: {
+              includeCreatedEventBlob: boolean;
+            };
+          };
+        };
+      }>;
+    };
+  };
+  verbose: boolean;
+  activeAtOffset: number | string;
+}
+
+export interface ActiveContractEntry {
+  workflowId?: string;
+  contractEntry?: {
+    JsActiveContract?: {
+      createdEvent?: {
+        offset?: number | string;
+        contractId?: string;
+        templateId?: string;
+        createArgument?: Record<string, unknown>;
+      };
+    };
+  };
+}
+
 export function buildCreateCommand(templateId: string, createArguments: JsonObject) {
   return {
     CreateCommand: {
@@ -98,4 +131,72 @@ export async function submitAndWait(
   }
 
   return response.json() as Promise<SubmitAndWaitResponse>;
+}
+
+export async function queryActiveContracts(
+  config: CantonConfig,
+  activeAtOffset: number | string,
+): Promise<ActiveContractEntry[]> {
+  const payload: ActiveContractsRequest = {
+    filter: {
+      filtersByParty: {},
+      filtersForAnyParty: {
+        cumulative: [
+          {
+            identifierFilter: {
+              WildcardFilter: {
+                value: {
+                  includeCreatedEventBlob: false,
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+    verbose: false,
+    activeAtOffset,
+  };
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (config.ledgerApiToken) {
+    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
+  }
+
+  const response = await fetch(
+    `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/active-contracts`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Canton JSON API active contract query failed (${response.status}): ${body}`);
+  }
+
+  return response.json() as Promise<ActiveContractEntry[]>;
+}
+
+export function findCreatedContractIdAtOffset(
+  contracts: ActiveContractEntry[],
+  templateId: string,
+  offset: number | string,
+) {
+  const normalizedOffset = String(offset);
+
+  return contracts.find((entry) => {
+    const event = entry.contractEntry?.JsActiveContract?.createdEvent;
+    return (
+      event?.templateId === templateId &&
+      String(event.offset) === normalizedOffset &&
+      event.contractId
+    );
+  })?.contractEntry?.JsActiveContract?.createdEvent?.contractId;
 }

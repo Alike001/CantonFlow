@@ -11,6 +11,7 @@ export interface ConfidentialBid {
   note: string;
   submittedAt: string;
   source: "seed" | "lender";
+  fundingBidContractId?: string;
 }
 
 export const seedBids: ConfidentialBid[] = [

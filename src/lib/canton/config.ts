@@ -12,6 +12,8 @@ export interface CantonConfig {
   };
 }
 
+type CantonRole = "supplier" | "buyer" | "regulator" | "lender";
+
 const REQUIRED_ENV = [
   "JSON_LEDGER_API_URL",
   "CANTONFLOW_PACKAGE_ID",
@@ -34,7 +36,12 @@ export function getMissingCantonEnv() {
   return missing;
 }
 
-export function getCantonConfig(): CantonConfig {
+function getUserId(role: CantonRole) {
+  const roleKey = `CANTONFLOW_${role.toUpperCase()}_USER_ID`;
+  return process.env[roleKey] || process.env.CANTONFLOW_USER_ID || role;
+}
+
+export function getCantonConfig(role: CantonRole = "supplier"): CantonConfig {
   const missing = getMissingCantonEnv();
 
   if (missing.length > 0) {
@@ -45,7 +52,7 @@ export function getCantonConfig(): CantonConfig {
     applicationId: process.env.CANTONFLOW_APPLICATION_ID || "cantonflow",
     jsonLedgerApiUrl: process.env.JSON_LEDGER_API_URL!,
     ledgerApiToken: process.env.LEDGER_API_TOKEN || "",
-    userId: process.env.CANTONFLOW_USER_ID || "supplier",
+    userId: getUserId(role),
     packageId: process.env.CANTONFLOW_PACKAGE_ID!,
     parties: {
       supplier: process.env.CANTONFLOW_SUPPLIER_PARTY!,

@@ -26,8 +26,8 @@ Implemented:
 - KPI cards, recent invoice table, and activity stream
 - Supplier dashboard ledger proof panel with local update IDs
 - Working upload invoice form with validation, ledger submission, and update ID display
-- Lender workspace for submitting confidential financing bids
-- Supplier marketplace for reviewing and accepting private offers
+- Lender workspace for submitting confidential financing bids to the Canton JSON API route
+- Supplier marketplace for reviewing private offers and accepting ledger-backed bids
 - DAML contract model for invoice requests, private bids, funding agreements, and settlement instructions
 - Clean navigation across all live routes
 - Production build verification
@@ -107,7 +107,7 @@ See [docs/CANTON_ARCHITECTURE.md](./docs/CANTON_ARCHITECTURE.md).
 
 Final qualification requires the Daml contracts to run on Canton DevNet. See [docs/DEVNET_DEPLOYMENT.md](./docs/DEVNET_DEPLOYMENT.md).
 
-The app now includes server-side Canton JSON API routes for DevNet readiness and `InvoiceRequest` submission:
+The app now includes server-side Canton JSON API routes for DevNet readiness, supplier invoice submission, lender bid submission, bid acceptance, and settlement preparation:
 
 - `GET /api/canton/status`
 - `POST /api/canton/invoice-requests`

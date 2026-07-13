@@ -44,8 +44,8 @@ The product is designed around those strengths instead of generic crypto wallet 
 - Supplier dashboard
 - Upload invoice flow with validation and ledger update ID display
 - Confidential marketplace screen
-- Lender bid submission workflow
-- Supplier bid acceptance state
+- Lender bid submission workflow wired to the Canton JSON API route
+- Supplier bid acceptance workflow wired to the Canton JSON API route for ledger-backed offers
 - Regulator metadata-only view
 - DAML contract model for the workflow lifecycle
 - Local Canton sandbox execution through JSON API routes

@@ -2,6 +2,8 @@ import { cantonTemplateId, type CantonConfig } from "./config";
 import {
   buildCreateCommand,
   buildExerciseCommand,
+  findCreatedContractIdAtOffset,
+  queryActiveContracts,
   submitAndWait,
 } from "./json-ledger-api";
 
@@ -96,7 +98,7 @@ export async function submitFundingBidOnLedger(
     submittedAt: string;
   },
 ) {
-  return submitAndWait(config, {
+  const result = await submitAndWait(config, {
     workflowId: "cantonflow-submit-funding-bid",
     commandIdPrefix: "submit-funding-bid",
     actAs: [config.parties.lender],
@@ -116,6 +118,28 @@ export async function submitFundingBidOnLedger(
       ),
     ],
   });
+
+  try {
+    const fundingBidTemplateId = cantonTemplateId(config, "FundingBid");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      fundingBidTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "FundingBid contract lookup failed",
+    };
+  }
 }
 
 export async function acceptFundingBidOnLedger(

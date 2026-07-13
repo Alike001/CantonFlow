@@ -2,7 +2,14 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { CheckCircle2, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  EyeOff,
+  Loader2,
+  LockKeyhole,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +20,13 @@ import {
   type ConfidentialBid,
   seedBids,
 } from "@/data/demoBids";
+
+type AgreementSubmission = {
+  status?: string;
+  updateId?: string;
+  completionOffset?: string | number;
+  error?: string;
+};
 
 export default function SupplierMarketplace() {
   const [storedBids] = useState<ConfidentialBid[]>(() => {
@@ -26,6 +40,10 @@ export default function SupplierMarketplace() {
 
     return window.localStorage.getItem(ACCEPTED_BID_STORAGE_KEY);
   });
+  const [agreementSubmission, setAgreementSubmission] =
+    useState<AgreementSubmission | null>(null);
+  const [ledgerError, setLedgerError] = useState("");
+  const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
 
   const offers = useMemo(() => {
     const storedIds = new Set(storedBids.map((bid) => bid.id));
@@ -34,9 +52,50 @@ export default function SupplierMarketplace() {
     return [...storedBids, ...fallbackBids];
   }, [storedBids]);
 
-  function acceptOffer(bidId: string) {
-    window.localStorage.setItem(ACCEPTED_BID_STORAGE_KEY, bidId);
-    setAcceptedBidId(bidId);
+  async function acceptOffer(offer: ConfidentialBid) {
+    setAcceptingBidId(offer.id);
+    setLedgerError("");
+    setAgreementSubmission(null);
+
+    try {
+      let payload: AgreementSubmission | null = null;
+
+      if (offer.fundingBidContractId) {
+        const response = await fetch("/api/canton/agreements", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fundingBidContractId: offer.fundingBidContractId,
+            acceptedAt: new Date().toISOString(),
+          }),
+        });
+
+        payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Ledger agreement submission failed");
+        }
+
+        setAgreementSubmission(payload);
+      } else if (offer.source === "lender") {
+        throw new Error(
+          "This lender bid is missing a FundingBid contract ID. Submit the lender bid again, then accept the ledger-backed offer.",
+        );
+      }
+
+      window.localStorage.setItem(ACCEPTED_BID_STORAGE_KEY, offer.id);
+      setAcceptedBidId(offer.id);
+    } catch (error) {
+      setLedgerError(
+        error instanceof Error
+          ? error.message
+          : "Ledger agreement submission failed",
+      );
+    } finally {
+      setAcceptingBidId(null);
+    }
   }
 
   return (
@@ -45,6 +104,7 @@ export default function SupplierMarketplace() {
         {offers.map((offer) => {
           const isAccepted = acceptedBidId === offer.id;
           const isLenderSubmitted = offer.source === "lender";
+          const isAccepting = acceptingBidId === offer.id;
 
           return (
             <Card key={offer.id} className="rounded-lg border-slate-200 shadow-sm">
@@ -69,10 +129,19 @@ export default function SupplierMarketplace() {
 
                   <Button
                     variant={isAccepted ? "secondary" : "default"}
-                    disabled={isAccepted}
-                    onClick={() => acceptOffer(offer.id)}
+                    disabled={isAccepted || isAccepting}
+                    onClick={() => acceptOffer(offer)}
                   >
-                    {isAccepted ? "Funding agreement prepared" : "Accept offer"}
+                    {isAccepting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Preparing agreement
+                      </>
+                    ) : isAccepted ? (
+                      "Funding agreement prepared"
+                    ) : (
+                      "Accept offer"
+                    )}
                   </Button>
                 </div>
 
@@ -99,9 +168,30 @@ export default function SupplierMarketplace() {
                         Funding agreement prepared.
                       </p>
                       <p className="mt-1 text-emerald-800">
-                        Next milestone: create the Canton/DAML agreement and
-                        settlement instruction for this accepted offer.
+                        {offer.fundingBidContractId
+                          ? "A Canton FundingAgreement was created for this accepted offer."
+                          : "Demo offer accepted locally. Ledger acceptance requires a FundingBid contract ID."}
                       </p>
+                      {agreementSubmission && offer.fundingBidContractId ? (
+                        <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                          <div>
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              Update ID
+                            </dt>
+                            <dd className="mt-1 break-all font-mono text-emerald-950">
+                              {agreementSubmission.updateId || "Pending"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              Offset
+                            </dt>
+                            <dd className="mt-1 font-mono text-emerald-950">
+                              {agreementSubmission.completionOffset || "Pending"}
+                            </dd>
+                          </div>
+                        </dl>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -109,6 +199,15 @@ export default function SupplierMarketplace() {
             </Card>
           );
         })}
+
+        {ledgerError ? (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="break-words">
+              {ledgerError}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <aside className="space-y-4">

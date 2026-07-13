@@ -4,10 +4,12 @@ import type { ReactNode } from "react";
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   ArrowRight,
   CheckCircle2,
   EyeOff,
   Landmark,
+  Loader2,
   LockKeyhole,
 } from "lucide-react";
 
@@ -42,6 +44,16 @@ const initialForm = {
   rate: "4.9",
   term: "61",
   note: "Can settle quickly after invoice verification.",
+  inviteContractId:
+    "0083a7049273f33ad09f265395b932a16da4d6c65d5f53ba84f8a939c6f4e81723ca12122012414e486b4df66c0bf3fb0af2b0e218c144cab979c1e76f2e969150fff620a5",
+};
+
+type LedgerSubmission = {
+  status?: string;
+  updateId?: string;
+  completionOffset?: string | number;
+  createdContractId?: string;
+  contractLookupWarning?: string;
 };
 
 export default function LenderBidWorkspace() {
@@ -57,6 +69,10 @@ export default function LenderBidWorkspace() {
     return bids.find((bid) => bid.source === "lender") || null;
   });
   const [error, setError] = useState("");
+  const [ledgerError, setLedgerError] = useState("");
+  const [ledgerSubmission, setLedgerSubmission] =
+    useState<LedgerSubmission | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((current) => ({
@@ -64,9 +80,11 @@ export default function LenderBidWorkspace() {
       [field]: value,
     }));
     setError("");
+    setLedgerError("");
+    setLedgerSubmission(null);
   }
 
-  function submitBid(event: FormEvent<HTMLFormElement>) {
+  async function submitBid(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!Number(form.advance) || !Number(form.rate) || !Number(form.term)) {
@@ -74,29 +92,72 @@ export default function LenderBidWorkspace() {
       return;
     }
 
-    const newBid: ConfidentialBid = {
-      id: `lender-bid-${Date.now()}`,
-      invoice: selectedInvoice,
-      lender: "Atlas Private Credit",
-      advance: formatCurrency(form.advance),
-      rate: `${form.rate}%`,
-      term: `${form.term} days`,
-      note: form.note,
-      submittedAt: new Date().toLocaleString(),
-      source: "lender",
-    };
-
-    const stored = window.localStorage.getItem(DEMO_BIDS_STORAGE_KEY);
-    const existing = stored ? (JSON.parse(stored) as ConfidentialBid[]) : [];
-    const withoutPreviousLenderBid = existing.filter((bid) => bid.source !== "lender");
-
-    window.localStorage.setItem(
-      DEMO_BIDS_STORAGE_KEY,
-      JSON.stringify([newBid, ...withoutPreviousLenderBid])
-    );
-
-    setSubmittedBid(newBid);
+    setIsSubmitting(true);
     setError("");
+    setLedgerError("");
+    setLedgerSubmission(null);
+
+    try {
+      let ledgerPayload: LedgerSubmission | null = null;
+
+      if (form.inviteContractId.trim()) {
+        const response = await fetch("/api/canton/bids", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lenderInviteContractId: form.inviteContractId.trim(),
+            advanceAmount: Number(form.advance).toFixed(1),
+            discountRate: Number(form.rate).toFixed(1),
+            settlementDays: Number(form.term),
+            lenderNote: form.note,
+            submittedAt: new Date().toISOString(),
+          }),
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error || "Ledger bid submission failed");
+        }
+
+        ledgerPayload = payload;
+        setLedgerSubmission(payload);
+      }
+
+      const newBid: ConfidentialBid = {
+        id: `lender-bid-${Date.now()}`,
+        invoice: selectedInvoice,
+        lender: "Atlas Private Credit",
+        advance: formatCurrency(form.advance),
+        rate: `${form.rate}%`,
+        term: `${form.term} days`,
+        note: form.note,
+        submittedAt: new Date().toLocaleString(),
+        source: "lender",
+        fundingBidContractId: ledgerPayload?.createdContractId,
+      };
+
+      const stored = window.localStorage.getItem(DEMO_BIDS_STORAGE_KEY);
+      const existing = stored ? (JSON.parse(stored) as ConfidentialBid[]) : [];
+      const withoutPreviousLenderBid = existing.filter((bid) => bid.source !== "lender");
+
+      window.localStorage.setItem(
+        DEMO_BIDS_STORAGE_KEY,
+        JSON.stringify([newBid, ...withoutPreviousLenderBid])
+      );
+
+      setSubmittedBid(newBid);
+    } catch (submissionError) {
+      setLedgerError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Ledger bid submission failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -169,6 +230,41 @@ export default function LenderBidWorkspace() {
                     The supplier can now review this offer. Competing lenders
                     cannot see these terms.
                   </p>
+                  {ledgerSubmission ? (
+                    <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                      <div>
+                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                          Update ID
+                        </dt>
+                        <dd className="mt-1 break-all font-mono text-emerald-950">
+                          {ledgerSubmission.updateId || "Pending"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                          Offset
+                        </dt>
+                        <dd className="mt-1 font-mono text-emerald-950">
+                          {ledgerSubmission.completionOffset || "Pending"}
+                        </dd>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                          FundingBid contract
+                        </dt>
+                        <dd className="mt-1 break-all font-mono text-emerald-950">
+                          {ledgerSubmission.createdContractId || "Lookup pending"}
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : null}
+                  {ledgerSubmission?.contractLookupWarning ? (
+                    <p className="mt-2 text-xs leading-5 text-emerald-800">
+                      Bid was submitted, but the contract ID lookup did not
+                      complete. Use the ledger proof query to retrieve the
+                      FundingBid contract before accepting.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -189,6 +285,23 @@ export default function LenderBidWorkspace() {
                   <div className="space-y-2">
                     <Label htmlFor="selectedInvoice">Invoice</Label>
                     <Input id="selectedInvoice" value={selectedInvoice} readOnly />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="inviteContractId">
+                      LenderInvite contract ID
+                    </Label>
+                    <Input
+                      id="inviteContractId"
+                      value={form.inviteContractId}
+                      onChange={(event) =>
+                        updateField("inviteContractId", event.target.value)
+                      }
+                    />
+                    <p className="text-xs leading-5 text-slate-500">
+                      Populated from the verified local ledger flow. Replace
+                      this with the DevNet invite contract ID after deployment.
+                    </p>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -242,8 +355,24 @@ export default function LenderBidWorkspace() {
                     </p>
                   ) : null}
 
-                  <Button className="w-full">
-                    Submit confidential bid
+                  {ledgerError ? (
+                    <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p className="break-words">
+                        {ledgerError}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <Button className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Submitting to ledger
+                      </>
+                    ) : (
+                      "Submit confidential bid"
+                    )}
                   </Button>
                 </form>
               </CardContent>
