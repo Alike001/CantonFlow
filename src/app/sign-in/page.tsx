@@ -26,17 +26,16 @@ export default function SignInPage() {
         <section className="py-14">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-violet-700">
-              Role entry
+              Workspace entry
             </p>
 
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Choose your role in the financing workflow
+              Open a CantonFlow workspace
             </h1>
 
             <p className="mt-5 text-base leading-7 text-slate-600">
-              CantonFlow uses role-based workspaces for selective disclosure:
-              suppliers, lenders, and observers do not see the same transaction
-              data.
+              Each workspace loads contracts visible to its configured Canton
+              party. Local development uses the supplied sandbox identities.
             </p>
           </div>
 

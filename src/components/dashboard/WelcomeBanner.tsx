@@ -19,8 +19,8 @@ export default function WelcomeBanner() {
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
             Upload an invoice, receive confidential financing offers,
-            and settle securely using Canton Network&apos;s privacy-preserving
-            infrastructure.
+            and coordinate settlement with Canton Network&apos;s privacy-preserving
+            workflow infrastructure.
           </p>
         </div>
 

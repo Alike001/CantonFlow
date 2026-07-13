@@ -16,11 +16,6 @@ export interface CreateInvoiceRequestInput {
   dueDate: string;
   requestedAdvance: string;
   minimumDiscountRate: string;
-  visibility?: {
-    buyerVisibleToLenders?: boolean;
-    invoicePdfVisibleToLenders?: boolean;
-    regulatorCanSeeCommercialTerms?: boolean;
-  };
 }
 
 export function createInvoiceRequestArguments(
@@ -39,13 +34,6 @@ export function createInvoiceRequestArguments(
     dueDate: input.dueDate,
     requestedAdvance: input.requestedAdvance,
     minimumDiscountRate: input.minimumDiscountRate,
-    visibility: {
-      buyerVisibleToLenders: input.visibility?.buyerVisibleToLenders ?? false,
-      invoicePdfVisibleToLenders:
-        input.visibility?.invoicePdfVisibleToLenders ?? false,
-      regulatorCanSeeCommercialTerms:
-        input.visibility?.regulatorCanSeeCommercialTerms ?? false,
-    },
   };
 }
 
@@ -57,12 +45,20 @@ export async function createInvoiceRequestOnLedger(
     workflowId: "cantonflow-invoice-request",
     commandIdPrefix: "invoice-request",
     actAs: [config.parties.supplier],
-    readAs: [config.parties.buyer, config.parties.regulator],
     commands: [
       buildCreateCommand(
         cantonTemplateId(config, "InvoiceRequest"),
         createInvoiceRequestArguments(config, input),
       ),
+      buildCreateCommand(cantonTemplateId(config, "WorkflowAuditEvent"), {
+        eventOwner: config.parties.supplier,
+        supplier: config.parties.supplier,
+        regulator: config.parties.regulator,
+        invoiceId: input.invoiceId,
+        invoiceNumber: input.invoiceNumber,
+        stage: "AuditInvoiceSubmitted",
+        occurredAt: new Date().toISOString(),
+      }),
     ],
   });
 
@@ -97,13 +93,12 @@ export async function inviteLenderOnLedger(
     workflowId: "cantonflow-invite-lender",
     commandIdPrefix: "invite-lender",
     actAs: [config.parties.supplier],
-    readAs: [config.parties.lender, config.parties.regulator],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "InvoiceRequest"),
         input.invoiceRequestContractId,
         "InviteLender",
-        { lender: config.parties.lender },
+        { lender: config.parties.lender, occurredAt: new Date().toISOString() },
       ),
     ],
   });
@@ -146,7 +141,6 @@ export async function submitFundingBidOnLedger(
     workflowId: "cantonflow-submit-funding-bid",
     commandIdPrefix: "submit-funding-bid",
     actAs: [config.parties.lender],
-    readAs: [config.parties.supplier],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "LenderInvite"),
@@ -194,7 +188,6 @@ export async function acceptFundingBidOnLedger(
     workflowId: "cantonflow-accept-funding-bid",
     commandIdPrefix: "accept-funding-bid",
     actAs: [config.parties.supplier],
-    readAs: [config.parties.lender, config.parties.regulator],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "FundingBid"),
@@ -240,7 +233,6 @@ export async function prepareSettlementOnLedger(
     workflowId: "cantonflow-prepare-settlement",
     commandIdPrefix: "prepare-settlement",
     actAs: [config.parties.supplier, config.parties.lender],
-    readAs: [config.parties.regulator],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "FundingAgreement"),

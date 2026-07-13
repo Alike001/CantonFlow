@@ -13,13 +13,6 @@ const invoiceRequestSchema = z.object({
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   requestedAdvance: z.string().min(1),
   minimumDiscountRate: z.string().min(1),
-  visibility: z
-    .object({
-      buyerVisibleToLenders: z.boolean().optional(),
-      invoicePdfVisibleToLenders: z.boolean().optional(),
-      regulatorCanSeeCommercialTerms: z.boolean().optional(),
-    })
-    .optional(),
 });
 
 export async function POST(request: Request) {

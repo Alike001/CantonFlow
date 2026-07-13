@@ -14,7 +14,7 @@ Done in this repository:
 - Daml source: `daml/CantonFlow.daml`
 - Daml project config: `daml.yaml`
 - Compiled DAR: `.daml/dist/cantonflow-0.1.0.dar`
-- Frontend workflow: supplier invoice upload, lender private bid, supplier acceptance, regulator metadata view
+- Frontend workflow: supplier funding request, lender private bid, supplier acceptance, regulator metadata-only ledger view
 - Architecture doc: `docs/CANTON_ARCHITECTURE.md`
 - DevNet upload helper: `scripts/upload-dar-devnet.sh`
 
@@ -170,12 +170,7 @@ curl -X POST http://localhost:3000/api/canton/invoice-requests \
     "currency": "USD",
     "dueDate": "2026-08-30",
     "requestedAdvance": "252000.0",
-    "minimumDiscountRate": "4.5",
-    "visibility": {
-      "buyerVisibleToLenders": false,
-      "invoicePdfVisibleToLenders": false,
-      "regulatorCanSeeCommercialTerms": false
-    }
+    "minimumDiscountRate": "4.5"
   }'
 ```
 
@@ -245,11 +240,10 @@ d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
 
 | Step | API route | Update ID | Offset |
 | --- | --- | --- | --- |
-| `InvoiceRequest` created | `/api/canton/invoice-requests` | `122097e25256a541f06c27ce4da57babb80ef6eb48161c5cc5b8fa867df5b8ab16b5` | `17` |
-| `LenderInvite` created | `/api/canton/invites` | `12200d4bb126c762a3b48197db2ab7e7aaf7a0458c13c264a95ec2aa2bce34036939` | `20` |
-| `FundingBid` submitted | `/api/canton/bids` | `1220be6483f710f7d6dd1a88f22f9c3ab5de348dd3c393ef7fa76cc60d3d04743005` | `23` |
-| `FundingAgreement` accepted | `/api/canton/agreements` | `122079df4bcb87e3e14ae5dda290c3101a128c1ddf425c5f9950695c67d69fe84139` | `26` |
-| `SettlementInstruction` prepared | `/api/canton/settlements` | `12209626362a513904a03fee188d79ec1e8e3d1fec2b2d2254dd652cf25ab02e06e0` | `29` |
+| `InvoiceRequest` created | `/api/canton/invoice-requests` | `1220ad340409895ce5c34e9a13da9d7834d1ee1cab03d71e72781f417083f7c6b7c0` | `20` |
+| `LenderInvite` created | `/api/canton/invites` | `1220ad144d919550a39a8cecde91eeda5fb5328aca7eaa362900bfa10b686255d882` | `23` |
+| `FundingBid` submitted | `/api/canton/bids` | `1220fac191b01932d9d9851e5cdffe5dda4cc6cdade6012b61cda487d6b34380ad02` | `26` |
+| `FundingAgreement` accepted | `/api/canton/agreements` | `1220dbd129e3d533e903bf1d4b9767e741609e43608f005d61acba252c2b98c1fbc4` | `29` |
 
 The same route sequence should be repeated against the Seaport shared DevNet validator after org access is enabled. Replace the local update IDs with DevNet update IDs in the final submission.
 

@@ -1,6 +1,6 @@
 # CantonFlow
 
-CantonFlow is a confidential receivables RFQ product for suppliers and institutional lenders. Suppliers open financing requests, approved lenders submit private bids, and the winning offer becomes a Canton-modeled funding agreement with a settlement instruction.
+CantonFlow is a confidential receivables RFQ product for suppliers and institutional lenders. Suppliers open financing requests, approved lenders submit private bids, and the winning offer becomes a shared Canton funding agreement.
 
 Built for the Encode Club x Canton Foundation Build on Canton Hackathon.
 
@@ -11,9 +11,9 @@ Invoice financing depends on sensitive commercial data: buyer names, invoice PDF
 CantonFlow focuses on the workflows institutions actually need:
 
 - Confidential lender bidding
-- Selective disclosure by participant role
+- Contract-level selective disclosure by participant role
 - Permissioned invoice financing workflows
-- DAML-modeled funding agreements and settlement instructions
+- DAML-modeled funding agreements, settlement coordination, and regulator audit events
 - Professional UX for suppliers, lenders, and regulated finance teams
 
 ## Product Scope
@@ -24,12 +24,13 @@ Implemented:
 - Role entry with supplier, lender, and regulator workspaces
 - Supplier dashboard with responsive layout
 - KPI cards, recent invoice table, and activity stream
-- Supplier dashboard ledger proof panel with local update IDs
+- Supplier, lender, and regulator workspaces backed by role-specific Canton reads
 - Canton environment badge for Local Sandbox, DevNet, or external validator status
-- Working upload invoice form with validation, ledger submission, lender invitation, and update ID display
-- Lender workspace for submitting confidential financing bids to the Canton JSON API route
-- Supplier marketplace for reviewing private offers, accepting ledger-backed bids, and preparing settlement instructions
-- DAML contract model for invoice requests, private bids, funding agreements, and settlement instructions
+- Working funding-request form with validation, ledger submission, lender invitation, and update ID display
+- Lender workspace for querying active invitations and submitting confidential financing bids
+- Supplier marketplace for querying private offers and accepting ledger-backed bids
+- Regulator workspace for querying metadata-only `WorkflowAuditEvent` contracts
+- DAML contract model for invoice requests, private bids, funding agreements, settlement coordination, and metadata-only audit events
 - Clean navigation across all live routes
 - Production build verification
 
@@ -39,12 +40,12 @@ Implemented:
 2. Click `Launch Product`.
 3. Choose a role on the entry screen.
 4. Continue as Supplier to review the dashboard.
-5. Open `Upload` and submit the prefilled invoice form to create an `InvoiceRequest` and fresh `LenderInvite`.
+5. Open `Upload` and create a funding request to create an `InvoiceRequest` and fresh `LenderInvite`.
 6. Open `Marketplace`.
 7. Switch to Lender and submit a confidential bid.
 8. Return as Supplier and accept the private offer.
-9. Switch to Regulator to show metadata-only oversight.
-10. Explain how lender offers remain confidential and selectively disclosed.
+9. Switch to Regulator to query metadata-only `WorkflowAuditEvent` records.
+10. Explain how lender offers remain confidential because competing lenders and regulators are not stakeholders in `FundingBid`.
 
 ## Tech Stack
 
@@ -70,6 +71,7 @@ Open `http://localhost:3000`.
 ```bash
 npm run lint
 npm run build
+npm run test:daml
 ./scripts/install-dpm.sh
 HOME=$PWD/.home .tools/dpm/dpm build
 ```
@@ -78,21 +80,20 @@ HOME=$PWD/.home .tools/dpm/dpm build
 
 CantonFlow has been executed end to end on a local Canton sandbox through the app's server-side JSON API routes.
 
-Package ID:
+Current local package ID:
 
 ```text
-d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
+b3652ee39ac6b6dc2cf458d032acf8335078412a110336090dc7a1a334de8ed8
 ```
 
 Local ledger execution:
 
 | Step | Update ID | Offset |
 | --- | --- | --- |
-| `InvoiceRequest` created | `122097e25256a541f06c27ce4da57babb80ef6eb48161c5cc5b8fa867df5b8ab16b5` | `17` |
-| `LenderInvite` created | `12200d4bb126c762a3b48197db2ab7e7aaf7a0458c13c264a95ec2aa2bce34036939` | `20` |
-| `FundingBid` submitted | `1220be6483f710f7d6dd1a88f22f9c3ab5de348dd3c393ef7fa76cc60d3d04743005` | `23` |
-| `FundingAgreement` accepted | `122079df4bcb87e3e14ae5dda290c3101a128c1ddf425c5f9950695c67d69fe84139` | `26` |
-| `SettlementInstruction` prepared | `12209626362a513904a03fee188d79ec1e8e3d1fec2b2d2254dd652cf25ab02e06e0` | `29` |
+| `InvoiceRequest` created | `1220ad340409895ce5c34e9a13da9d7834d1ee1cab03d71e72781f417083f7c6b7c0` | `20` |
+| `LenderInvite` created | `1220ad144d919550a39a8cecde91eeda5fb5328aca7eaa362900bfa10b686255d882` | `23` |
+| `FundingBid` submitted | `1220fac191b01932d9d9851e5cdffe5dda4cc6cdade6012b61cda487d6b34380ad02` | `26` |
+| `FundingAgreement` accepted | `1220dbd129e3d533e903bf1d4b9767e741609e43608f005d61acba252c2b98c1fbc4` | `29` |
 
 ## Canton DevNet Proof
 
@@ -112,7 +113,7 @@ DevNet proof checklist to replace after access:
 | --- | --- |
 | DevNet validator | Pending Seaport access |
 | DevNet JSON Ledger API URL | Pending Seaport access |
-| DAR package ID | `d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0` locally, replace with DevNet package ID if different |
+| DAR package ID | `b3652ee39ac6b6dc2cf458d032acf8335078412a110336090dc7a1a334de8ed8` locally, replace with DevNet package ID after upload |
 | Supplier party | Pending DevNet party |
 | Buyer party | Pending DevNet party |
 | Lender party | Pending DevNet party |

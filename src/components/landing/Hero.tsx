@@ -79,7 +79,7 @@ export default function Hero() {
             />
 
             <WorkflowItem
-              title="Atomic settlement"
+              title="Settlement coordination"
               color="bg-orange-500"
             />
 

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | CantonFlow",
   },
   description:
-    "A privacy-preserving invoice financing platform built on Canton Network. CantonFlow enables suppliers, lenders, and regulators to collaborate securely using selective disclosure and atomic settlement.",
+    "A privacy-preserving receivables financing workflow built on Canton Network. CantonFlow enables suppliers, lenders, and regulators to collaborate through selective disclosure.",
   keywords: [
     "Canton Network",
     "Invoice Financing",

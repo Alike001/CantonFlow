@@ -7,17 +7,20 @@ import DA.Time
 
 testReceivablesRfqLifecycle : Script ()
 testReceivablesRfqLifecycle = script do
-  supplier <- allocatePartyWithHint "supplier" (PartyIdHint "supplier")
-  buyer <- allocatePartyWithHint "buyer" (PartyIdHint "buyer")
-  regulator <- allocatePartyWithHint "regulator" (PartyIdHint "regulator")
-  lender <- allocatePartyWithHint "lender" (PartyIdHint "lender")
+  supplier <- allocatePartyByHint (PartyIdHint "supplier")
+  buyer <- allocatePartyByHint (PartyIdHint "buyer")
+  regulator <- allocatePartyByHint (PartyIdHint "regulator")
+  lender <- allocatePartyByHint (PartyIdHint "lender")
+
   let due = date 2026 Aug 30
   let submitted = time (date 2026 Jul 11) 9 0 0
+  let invited = time (date 2026 Jul 11) 9 1 0
   let accepted = time (date 2026 Jul 11) 9 5 0
   let prepared = time (date 2026 Jul 11) 9 10 0
   let settled = time (date 2026 Jul 11) 9 15 0
 
-  invoiceRequest <- supplier `submit` createCmd InvoiceRequest with
+  invoiceRequest <- submit supplier do
+    createCmd InvoiceRequest with
       supplier
       buyer
       regulator
@@ -29,39 +32,49 @@ testReceivablesRfqLifecycle = script do
       dueDate = due
       requestedAdvance = 252000.0
       minimumDiscountRate = 4.5
-      visibility = VisibilityPolicy with
-        buyerVisibleToLenders = False
-        invoicePdfVisibleToLenders = False
-        regulatorCanSeeCommercialTerms = False
 
-  invite <- submit supplier do
-    exerciseCmd invoiceRequest InviteLender with
-      lender = lender
-
-  fundingBid <- submit lender do
-    createCmd FundingBid with
-      supplier = supplier
-      lender = lender
-      regulator = regulator
+  submit supplier do
+    createCmd WorkflowAuditEvent with
+      eventOwner = supplier
+      supplier
+      regulator
       invoiceId = "receivable-001"
       invoiceNumber = "INV-2026-004"
+      stage = AuditInvoiceSubmitted
+      occurredAt = submitted
+
+  lenderInvite <- submit supplier do
+    exerciseCmd invoiceRequest InviteLender with
+      lender
+      occurredAt = invited
+
+  fundingBid <- submit lender do
+    exerciseCmd lenderInvite SubmitFundingBid with
       advanceAmount = 252000.0
       discountRate = 4.9
       settlementDays = 61
       lenderNote = "Can settle quickly after invoice verification."
       submittedAt = submitted
 
-  agreement <- submit supplier do
+  fundingAgreement <- submit supplier do
     exerciseCmd fundingBid AcceptBid with
       acceptedAt = accepted
 
-  settlement <- submitMulti [supplier, lender] [] do
-    exerciseCmd agreement PrepareSettlement with
+  settlementInstruction <- submitMulti [supplier, lender] [] do
+    exerciseCmd fundingAgreement PrepareSettlement with
       settlementReference = "cantonflow-settlement-001"
       preparedAt = prepared
 
   submitMulti [supplier, lender] [] do
-    exerciseCmd settlement MarkSettled with
+    exerciseCmd settlementInstruction MarkSettled with
       settledAt = settled
 
-  pure ()
+  regulatorBids <- query @FundingBid regulator
+  regulatorAgreements <- query @FundingAgreement regulator
+  regulatorSettlements <- query @SettlementInstruction regulator
+  regulatorAuditEvents <- query @WorkflowAuditEvent regulator
+
+  assert (null regulatorBids)
+  assert (null regulatorAgreements)
+  assert (null regulatorSettlements)
+  assert (length regulatorAuditEvents == 6)

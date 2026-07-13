@@ -1,82 +1,51 @@
 # Canton Architecture
 
-CantonFlow is modeled as a permissioned invoice financing workflow where each party only sees the contracts relevant to its role.
+CantonFlow is a permissioned receivables financing RFQ. It uses separate Daml contracts for commercial workflow data and regulator audit metadata so selective disclosure is enforced by Canton stakeholders, not by frontend redaction.
 
-## Parties
-
-- `supplier`: uploads invoices, invites lenders, accepts bids.
-- `lender`: receives selectively disclosed invoice opportunities and submits private funding bids.
-- `buyer`: referenced as the invoice counterparty.
-- `regulator`: observes workflow metadata without seeing private commercial bid terms.
-
-## Contract Lifecycle
+## Commercial Workflow
 
 1. `InvoiceRequest`
-   - Created by the supplier.
-   - Represents an uploaded invoice and requested financing.
-   - Observed by buyer and regulator.
-   - Supplier can invite eligible lenders.
+   - Supplier signatory; buyer observer.
+   - Holds the complete invoice request and stays off the regulator view.
 
 2. `LenderInvite`
-   - Created by supplier for one lender.
-   - This is the selective disclosure boundary for the lender.
-   - Lender sees permitted invoice fields, not all supplier documents or competing bids.
+   - Supplier signatory; invited lender observer.
+   - Carries the scoped financing opportunity. Other lenders are not stakeholders.
 
 3. `FundingBid`
-   - Created by a lender from a `LenderInvite`.
-   - Signatory: lender.
-   - Observer: supplier.
-   - Other lenders are not stakeholders, so competing bid terms remain private.
+   - Lender signatory; supplier observer.
+   - Carries bid pricing and lender note. The regulator and competing lenders are not stakeholders.
 
 4. `FundingAgreement`
-   - Created when supplier accepts a bid.
-   - Signatories: supplier and winning lender.
-   - Observer: regulator.
-   - Represents the accepted private financing terms.
+   - Supplier and winning lender are signatories.
+   - Carries accepted commercial terms. The regulator is not a stakeholder.
 
 5. `SettlementInstruction`
-   - Created when supplier and lender prepare settlement.
-   - Represents settlement readiness and later settled status.
-   - This is where atomic settlement integration should attach.
+   - Supplier and lender are signatories.
+   - Records settlement coordination. It does not move money or claim atomic delivery-versus-payment.
 
-## Why Canton
+## Regulator Boundary
 
-This workflow is a strong fit for Canton because invoice financing requires privacy across multiple dimensions:
+`WorkflowAuditEvent` is the only contract observed by the regulator. It contains the supplier party, invoice reference, lifecycle stage, and timestamp. It intentionally excludes invoice value, requested advance, lender pricing, lender note, and settlement reference.
 
-- Lenders should not see each other's bids.
-- Regulator visibility should not expose commercial terms.
-- Supplier and winning lender need a shared agreement.
-- Settlement should be coordinated without leaking the full workflow publicly.
+This gives the regulator a real Canton ledger view while preserving commercial confidentiality.
 
 ## Frontend Mapping
 
-- `/sign-in`: chooses supplier, lender, or regulator role.
-- `/supplier/upload`: maps to `InvoiceRequest`.
-- `/lender`: maps to `LenderInvite` and `SubmitFundingBid`.
-- `/supplier/marketplace`: maps to `FundingBid` and `AcceptBid`.
-- `/regulator`: maps to regulator observer visibility.
+- `/supplier`: active `InvoiceRequest`, `FundingBid`, `FundingAgreement`, and `SettlementInstruction` contracts visible to the supplier party.
+- `/supplier/upload`: creates an `InvoiceRequest`, an `InvoiceSubmitted` audit event, then a scoped `LenderInvite`.
+- `/lender`: reads active `LenderInvite` contracts visible to the lender party and exercises `SubmitFundingBid`.
+- `/supplier/marketplace`: reads supplier-visible `FundingBid` contracts and exercises `AcceptBid`.
+- `/regulator`: reads only `WorkflowAuditEvent` contracts visible to the regulator party.
 
-The app includes a server-side Canton JSON API adapter under `src/lib/canton` and route handlers under `/api/canton`. Browser code does not hold ledger tokens. Supplier invoice upload creates the `InvoiceRequest` and a fresh `LenderInvite`, then lender bid submission, supplier acceptance for ledger-backed bids, and settlement preparation continue through the same server routes. The remaining integration work is DevNet read models after validator credentials are available.
+The browser does not store workflow contracts, bid terms, audit evidence, or contract IDs. Each workspace queries the configured party’s active Canton contracts through server-side JSON Ledger API routes.
 
 ## Verification
-
-The DAML source lives in:
-
-```text
-daml/CantonFlow.daml
-```
-
-Once DPM is installed, verify with:
-
-```bash
-HOME=$PWD/.home .tools/dpm/dpm build
-```
-
-An exploratory lifecycle script is preserved at `test/daml/CantonFlowTest.daml`; it is outside the package source until its Daml Script syntax is finalized.
-
-The Next.js app is verified separately with:
 
 ```bash
 npm run lint
 npm run build
+npm run test:daml
 ```
+
+`npm run test:daml` runs a separate Daml Script package. It proves the full lifecycle and asserts that the regulator has no visible `FundingBid`, `FundingAgreement`, or `SettlementInstruction` contracts while receiving audit events.

@@ -10,12 +10,29 @@ data InvoiceStatus
   | Settled
   deriving (Eq, Show)
 
-data VisibilityPolicy = VisibilityPolicy
-  with
-    buyerVisibleToLenders : Bool
-    invoicePdfVisibleToLenders : Bool
-    regulatorCanSeeCommercialTerms : Bool
+data AuditStage
+  = AuditInvoiceSubmitted
+  | AuditLenderInvited
+  | AuditBidSubmitted
+  | AuditBidAccepted
+  | AuditSettlementPrepared
+  | AuditSettlementConfirmed
   deriving (Eq, Show)
+
+-- This is the only contract disclosed to the regulator. It deliberately
+-- contains lifecycle metadata, not invoice or financing terms.
+template WorkflowAuditEvent
+  with
+    eventOwner : Party
+    supplier : Party
+    regulator : Party
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    stage : AuditStage
+    occurredAt : Time
+  where
+    signatory eventOwner
+    observer regulator
 
 template InvoiceRequest
   with
@@ -30,19 +47,18 @@ template InvoiceRequest
     dueDate : Date
     requestedAdvance : Decimal
     minimumDiscountRate : Decimal
-    visibility : VisibilityPolicy
   where
     signatory supplier
-    observer buyer, regulator
+    observer buyer
 
     choice InviteLender : ContractId LenderInvite
       with
         lender : Party
+        occurredAt : Time
       controller supplier
       do
-        create LenderInvite with
+        lenderInvite <- create LenderInvite with
           supplier
-          buyer
           regulator
           lender
           invoiceId
@@ -54,10 +70,20 @@ template InvoiceRequest
           requestedAdvance
           minimumDiscountRate
 
+        create WorkflowAuditEvent with
+          eventOwner = supplier
+          supplier
+          regulator
+          invoiceId
+          invoiceNumber
+          stage = AuditLenderInvited
+          occurredAt
+
+        pure lenderInvite
+
 template LenderInvite
   with
     supplier : Party
-    buyer : Party
     regulator : Party
     lender : Party
     invoiceId : InvoiceId
@@ -70,7 +96,7 @@ template LenderInvite
     minimumDiscountRate : Decimal
   where
     signatory supplier
-    observer lender, regulator
+    observer lender
 
     nonconsuming choice SubmitFundingBid : ContractId FundingBid
       with
@@ -83,17 +109,30 @@ template LenderInvite
       do
         assertMsg "Advance amount must be positive" (advanceAmount > 0.0)
         assertMsg "Discount rate must be positive" (discountRate > 0.0)
-        create FundingBid with
+
+        fundingBid <- create FundingBid with
           supplier
           lender
           regulator
           invoiceId
           invoiceNumber
+          currency
           advanceAmount
           discountRate
           settlementDays
           lenderNote
           submittedAt
+
+        create WorkflowAuditEvent with
+          eventOwner = lender
+          supplier
+          regulator
+          invoiceId
+          invoiceNumber
+          stage = AuditBidSubmitted
+          occurredAt = submittedAt
+
+        pure fundingBid
 
 template FundingBid
   with
@@ -102,6 +141,7 @@ template FundingBid
     regulator : Party
     invoiceId : InvoiceId
     invoiceNumber : Text
+    currency : Currency
     advanceAmount : Decimal
     discountRate : Decimal
     settlementDays : Int
@@ -116,17 +156,29 @@ template FundingBid
         acceptedAt : Time
       controller supplier
       do
-        create FundingAgreement with
+        fundingAgreement <- create FundingAgreement with
           supplier
           lender
           regulator
           invoiceId
           invoiceNumber
+          currency
           advanceAmount
           discountRate
           settlementDays
           acceptedAt
           status = BidAccepted
+
+        create WorkflowAuditEvent with
+          eventOwner = supplier
+          supplier
+          regulator
+          invoiceId
+          invoiceNumber
+          stage = AuditBidAccepted
+          occurredAt = acceptedAt
+
+        pure fundingAgreement
 
 template FundingAgreement
   with
@@ -135,6 +187,7 @@ template FundingAgreement
     regulator : Party
     invoiceId : InvoiceId
     invoiceNumber : Text
+    currency : Currency
     advanceAmount : Decimal
     discountRate : Decimal
     settlementDays : Int
@@ -142,7 +195,6 @@ template FundingAgreement
     status : InvoiceStatus
   where
     signatory supplier, lender
-    observer regulator
 
     choice PrepareSettlement : ContractId SettlementInstruction
       with
@@ -150,16 +202,28 @@ template FundingAgreement
         preparedAt : Time
       controller supplier, lender
       do
-        create SettlementInstruction with
+        settlementInstruction <- create SettlementInstruction with
           supplier
           lender
           regulator
           invoiceId
           invoiceNumber
+          currency
           advanceAmount
           settlementReference
           preparedAt
           status = SettlementReady
+
+        create WorkflowAuditEvent with
+          eventOwner = supplier
+          supplier
+          regulator
+          invoiceId
+          invoiceNumber
+          stage = AuditSettlementPrepared
+          occurredAt = preparedAt
+
+        pure settlementInstruction
 
 template SettlementInstruction
   with
@@ -168,19 +232,30 @@ template SettlementInstruction
     regulator : Party
     invoiceId : InvoiceId
     invoiceNumber : Text
+    currency : Currency
     advanceAmount : Decimal
     settlementReference : Text
     preparedAt : Time
     status : InvoiceStatus
   where
     signatory supplier, lender
-    observer regulator
 
     choice MarkSettled : ContractId SettlementInstruction
       with
         settledAt : Time
       controller supplier, lender
       do
-        create this with
+        settledInstruction <- create this with
           status = Settled
           preparedAt = settledAt
+
+        create WorkflowAuditEvent with
+          eventOwner = supplier
+          supplier
+          regulator
+          invoiceId
+          invoiceNumber
+          stage = AuditSettlementConfirmed
+          occurredAt = settledAt
+
+        pure settledInstruction

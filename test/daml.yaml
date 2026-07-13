@@ -1,0 +1,10 @@
+sdk-version: 3.4.9
+name: cantonflow-tests
+source: daml
+version: 0.1.0
+dependencies:
+  - daml-prim
+  - daml-stdlib
+  - daml-script
+data-dependencies:
+  - ../.daml/dist/cantonflow-0.1.0.dar

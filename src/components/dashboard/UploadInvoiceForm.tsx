@@ -14,11 +14,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  INVOICE_REQUEST_PROOF_STORAGE_KEY,
-  LENDER_INVITE_PROOF_STORAGE_KEY,
-  LENDER_INVITE_STORAGE_KEY,
-} from "@/data/demoBids";
 import { invoiceSchema } from "@/lib/validations/invoice";
 
 type FormState = {
@@ -44,7 +39,7 @@ type LedgerSubmission = {
 
 const initialFormState: FormState = {
   invoiceNumber: "INV-2026-004",
-  buyer: "Northstar Components Ltd.",
+  buyer: "Investment-grade manufacturing buyer",
   amount: "320000",
   currency: "USD",
   dueDate: "2026-08-30",
@@ -106,10 +101,6 @@ export default function UploadInvoiceForm() {
     setIsSubmitting(true);
 
     try {
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem(LENDER_INVITE_STORAGE_KEY);
-      }
-
       const response = await fetch("/api/canton/invoice-requests", {
         method: "POST",
         headers: {
@@ -124,11 +115,6 @@ export default function UploadInvoiceForm() {
           dueDate: result.data.dueDate,
           requestedAdvance: result.data.requestedAmount.toFixed(1),
           minimumDiscountRate: result.data.minimumRate.toFixed(1),
-          visibility: {
-            buyerVisibleToLenders: false,
-            invoicePdfVisibleToLenders: false,
-            regulatorCanSeeCommercialTerms: false,
-          },
         }),
       });
 
@@ -166,21 +152,6 @@ export default function UploadInvoiceForm() {
         );
       }
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          LENDER_INVITE_STORAGE_KEY,
-          invitePayload.createdContractId,
-        );
-        window.localStorage.setItem(
-          INVOICE_REQUEST_PROOF_STORAGE_KEY,
-          JSON.stringify(payload),
-        );
-        window.localStorage.setItem(
-          LENDER_INVITE_PROOF_STORAGE_KEY,
-          JSON.stringify(invitePayload),
-        );
-      }
-
       setSubmission({
         ...payload,
         inviteUpdateId: invitePayload.updateId,
@@ -209,8 +180,8 @@ export default function UploadInvoiceForm() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                This workflow validates the receivable and prepares it for a
-                confidential lender RFQ.
+                Create a confidential financing request from verified invoice
+                data held in your existing receivables system.
               </p>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -225,12 +196,12 @@ export default function UploadInvoiceForm() {
                 </FieldError>
 
                 <FieldError message={errors.buyer}>
-                  <Label htmlFor="buyer">Buyer Name</Label>
+                  <Label htmlFor="buyer">Buyer credit profile</Label>
                   <Input
                     id="buyer"
                     value={form.buyer}
                     onChange={(event) => updateField("buyer", event.target.value)}
-                    placeholder="ABC Manufacturing Ltd."
+                    placeholder="Investment-grade manufacturing buyer"
                   />
                 </FieldError>
 
@@ -290,13 +261,6 @@ export default function UploadInvoiceForm() {
                   />
                 </FieldError>
 
-                <div className="md:col-span-2">
-                  <Label htmlFor="invoiceFile">
-                    Upload Invoice (PDF)
-                  </Label>
-
-                  <Input id="invoiceFile" type="file" accept="application/pdf" className="mt-2" />
-                </div>
               </div>
             </div>
 
@@ -417,7 +381,8 @@ export default function UploadInvoiceForm() {
                   Selective disclosure
                 </h3>
                 <p className="text-sm text-slate-500">
-                  Buyer, invoice, and pricing details are scoped by role.
+                  Commercial terms are scoped by the Canton contract each role
+                  receives.
                 </p>
               </div>
             </div>
@@ -427,7 +392,8 @@ export default function UploadInvoiceForm() {
                 Visible to lenders
               </p>
               <p className="mt-2 text-sm text-slate-700">
-                Credit tier, due date, requested advance, and anonymized buyer profile.
+                Buyer credit profile, due date, invoice value, requested
+                advance, and maximum discount rate.
               </p>
             </div>
 
@@ -436,7 +402,8 @@ export default function UploadInvoiceForm() {
                 Hidden until award
               </p>
               <p className="mt-2 text-sm text-slate-700">
-                Supplier identity, full invoice PDF, and competing lender bids.
+                Buyer legal identity, invoice document, and competing lender
+                bids.
               </p>
             </div>
           </CardContent>

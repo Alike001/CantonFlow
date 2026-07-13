@@ -28,9 +28,9 @@ const steps = [
   },
   {
     icon: Landmark,
-    title: "Atomic Settlement",
+    title: "Settlement Coordination",
     description:
-      "Funds and ownership changes settle securely through Canton.",
+      "The parties create a shared settlement instruction after accepting funding.",
   },
 ];
 

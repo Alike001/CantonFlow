@@ -22,9 +22,9 @@ const comparisons = [
     icon: Scale,
   },
   {
-    title: "Atomic Settlement",
+    title: "Shared Workflow State",
     description:
-      "Funding and settlement complete together, reducing operational risk.",
+      "The winning lender and supplier share the same agreement and settlement instruction.",
     icon: ShieldCheck,
   },
 ];

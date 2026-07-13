@@ -1,16 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
-  ArrowRight,
   CheckCircle2,
   EyeOff,
   Landmark,
   Loader2,
   LockKeyhole,
+  RefreshCw,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,108 +17,133 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DEMO_BIDS_STORAGE_KEY,
-  FUNDING_BID_PROOF_STORAGE_KEY,
-  LENDER_INVITE_STORAGE_KEY,
-  type ConfidentialBid,
-  formatCurrency,
-} from "@/data/demoBids";
 
-const opportunities = [
-  {
-    invoice: "INV-2026-004",
-    buyerProfile: "Investment-grade manufacturing buyer",
-    advance: "$256,000",
-    due: "2026-08-30",
-  },
-  {
-    invoice: "INV-2026-001",
-    buyerProfile: "Enterprise procurement counterparty",
-    advance: "$190,000",
-    due: "2026-07-25",
-  },
-];
+type LedgerContract = {
+  contractId: string;
+  template: string;
+  createdAt: string | null;
+  payload: Record<string, unknown>;
+};
+
+type LedgerSubmission = {
+  updateId?: string;
+  completionOffset?: string | number;
+  createdContractId?: string;
+};
 
 const initialForm = {
   advance: "252000",
   rate: "4.9",
   term: "61",
   note: "Can settle quickly after invoice verification.",
-  inviteContractId: "",
 };
 
-type LedgerSubmission = {
-  status?: string;
-  updateId?: string;
-  completionOffset?: string | number;
-  createdContractId?: string;
-  contractLookupWarning?: string;
-};
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function formatAmount(value: unknown, currency = "USD") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Not available";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export default function LenderBidWorkspace() {
-  const [selectedInvoice, setSelectedInvoice] = useState(opportunities[0].invoice);
-  const [form, setForm] = useState(() => {
-    if (typeof window === "undefined") return initialForm;
-
-    return {
-      ...initialForm,
-      inviteContractId: window.localStorage.getItem(LENDER_INVITE_STORAGE_KEY) || "",
-    };
-  });
-  const [submittedBid, setSubmittedBid] = useState<ConfidentialBid | null>(() => {
-    if (typeof window === "undefined") return null;
-
-    const stored = window.localStorage.getItem(DEMO_BIDS_STORAGE_KEY);
-    if (!stored) return null;
-
-    const bids = JSON.parse(stored) as ConfidentialBid[];
-    return bids.find((bid) => bid.source === "lender") || null;
-  });
+  const [contracts, setContracts] = useState<LedgerContract[]>([]);
+  const [selectedInviteId, setSelectedInviteId] = useState("");
+  const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
-  const [ledgerError, setLedgerError] = useState("");
-  const [ledgerSubmission, setLedgerSubmission] =
-    useState<LedgerSubmission | null>(null);
+  const [submission, setSubmission] = useState<LedgerSubmission | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function updateField(field: keyof typeof initialForm, value: string) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  const invites = useMemo(
+    () => contracts.filter((contract) => contract.template === "LenderInvite"),
+    [contracts],
+  );
+  const submittedBids = useMemo(
+    () => contracts.filter((contract) => contract.template === "FundingBid"),
+    [contracts],
+  );
+  const selectedInvite =
+    invites.find((invite) => invite.contractId === selectedInviteId) || invites[0];
+
+  async function loadWorkspace() {
+    setIsLoading(true);
     setError("");
-    setLedgerError("");
-    setLedgerSubmission(null);
+
+    try {
+      const response = await fetch("/api/canton/lender-workspace", {
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as {
+        contracts?: LedgerContract[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not load lender workspace");
+      }
+
+      const nextContracts = payload.contracts || [];
+      setContracts(nextContracts);
+      setSelectedInviteId((current) => {
+        if (current && nextContracts.some((contract) => contract.contractId === current)) {
+          return current;
+        }
+
+        return nextContracts.find((contract) => contract.template === "LenderInvite")?.contractId || "";
+      });
+    } catch (workspaceError) {
+      setError(
+        workspaceError instanceof Error
+          ? workspaceError.message
+          : "Could not load lender workspace",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => { void loadWorkspace(); }, 0);
+    return () => window.clearTimeout(initial);
+  }, []);
+
+  function updateField(field: keyof typeof initialForm, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setError("");
+    setSubmission(null);
   }
 
   async function submitBid(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!selectedInvite) {
+      setError("There is no lender opportunity available on the configured ledger.");
+      return;
+    }
 
     if (!Number(form.advance) || !Number(form.rate) || !Number(form.term)) {
       setError("Advance, discount rate, and term must be valid numbers.");
       return;
     }
 
-    if (!form.inviteContractId.trim()) {
-      setError("Upload an invoice as the supplier first so CantonFlow can create a fresh lender invite.");
-      return;
-    }
-
     setIsSubmitting(true);
     setError("");
-    setLedgerError("");
-    setLedgerSubmission(null);
+    setSubmission(null);
 
     try {
-      let ledgerPayload: LedgerSubmission | null = null;
-
       const response = await fetch("/api/canton/bids", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          lenderInviteContractId: form.inviteContractId.trim(),
+          lenderInviteContractId: selectedInvite.contractId,
           advanceAmount: Number(form.advance).toFixed(1),
           discountRate: Number(form.rate).toFixed(1),
           settlementDays: Number(form.term),
@@ -127,43 +151,16 @@ export default function LenderBidWorkspace() {
           submittedAt: new Date().toISOString(),
         }),
       });
-
-      const payload = await response.json();
+      const payload = (await response.json()) as LedgerSubmission & { error?: string };
 
       if (!response.ok) {
         throw new Error(payload.error || "Ledger bid submission failed");
       }
 
-      ledgerPayload = payload;
-      setLedgerSubmission(payload);
-
-      window.localStorage.setItem(FUNDING_BID_PROOF_STORAGE_KEY, JSON.stringify(payload));
-
-      const newBid: ConfidentialBid = {
-        id: `lender-bid-${Date.now()}`,
-        invoice: selectedInvoice,
-        lender: "Atlas Private Credit",
-        advance: formatCurrency(form.advance),
-        rate: `${form.rate}%`,
-        term: `${form.term} days`,
-        note: form.note,
-        submittedAt: new Date().toLocaleString(),
-        source: "lender",
-        fundingBidContractId: ledgerPayload?.createdContractId,
-      };
-
-      const stored = window.localStorage.getItem(DEMO_BIDS_STORAGE_KEY);
-      const existing = stored ? (JSON.parse(stored) as ConfidentialBid[]) : [];
-      const withoutPreviousLenderBid = existing.filter((bid) => bid.source !== "lender");
-
-      window.localStorage.setItem(
-        DEMO_BIDS_STORAGE_KEY,
-        JSON.stringify([newBid, ...withoutPreviousLenderBid])
-      );
-
-      setSubmittedBid(newBid);
+      setSubmission(payload);
+      await loadWorkspace();
     } catch (submissionError) {
-      setLedgerError(
+      setError(
         submissionError instanceof Error
           ? submissionError.message
           : "Ledger bid submission failed",
@@ -173,6 +170,9 @@ export default function LenderBidWorkspace() {
     }
   }
 
+  const invitePayload = selectedInvite?.payload;
+  const currency = stringValue(invitePayload?.currency) || "USD";
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -181,276 +181,171 @@ export default function LenderBidWorkspace() {
             <p className="text-sm font-semibold uppercase tracking-wide text-violet-700">
               Lender workspace
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-              Submit confidential invoice financing bids
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+              Submit confidential financing bids
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Lenders can evaluate permitted deal fields and submit private
-              terms without seeing competing lender offers.
+              Opportunities below are active LenderInvite contracts visible to the
+              configured lender party.
             </p>
           </div>
 
-          <Button asChild variant="outline">
-            <Link href="/sign-in">
-              Switch role
-            </Link>
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => void loadWorkspace()} disabled={isLoading}>
+              <RefreshCw className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+              Refresh
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/sign-in">Switch workspace</Link>
+            </Button>
+          </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+        {error ? (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="break-words">{error}</p>
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
           <div className="space-y-4">
-            {opportunities.map((opportunity) => (
-              <Card
-                key={opportunity.invoice}
-                className="rounded-lg border-slate-200 shadow-sm"
-              >
-                <CardContent className="p-5">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-950">
-                        {opportunity.invoice}
-                      </h2>
-                      <p className="mt-2 text-sm text-slate-500">
-                        {opportunity.buyerProfile}
-                      </p>
-                    </div>
-
-                    <Button
-                      variant={selectedInvoice === opportunity.invoice ? "default" : "outline"}
-                      onClick={() => setSelectedInvoice(opportunity.invoice)}
-                    >
-                      Bid on invoice
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <Metric label="Requested advance" value={opportunity.advance} />
-                    <Metric label="Due date" value={opportunity.due} />
-                  </div>
+            {isLoading ? (
+              <Card className="rounded-lg border-slate-200 shadow-sm">
+                <CardContent className="flex items-center gap-3 p-6 text-sm text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading active lender contracts
                 </CardContent>
               </Card>
-            ))}
+            ) : invites.length === 0 ? (
+              <Card className="rounded-lg border-slate-200 shadow-sm">
+                <CardContent className="p-6">
+                  <h2 className="font-semibold text-slate-950">No active opportunities</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    A supplier must create a financing request and issue a LenderInvite
+                    before this lender can submit a bid.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              invites.map((invite) => {
+                const payload = invite.payload;
+                const isSelected = invite.contractId === selectedInvite?.contractId;
+                const inviteCurrency = stringValue(payload.currency) || "USD";
 
-            {submittedBid ? (
-              <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+                return (
+                  <button
+                    key={invite.contractId}
+                    type="button"
+                    onClick={() => setSelectedInviteId(invite.contractId)}
+                    className={`w-full rounded-lg border bg-white p-5 text-left shadow-sm transition ${
+                      isSelected ? "border-violet-500 ring-1 ring-violet-200" : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">
+                          Active lender invite
+                        </p>
+                        <h2 className="mt-2 text-lg font-semibold text-slate-950">
+                          {stringValue(payload.invoiceNumber)}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {stringValue(payload.buyerProfile)}
+                        </p>
+                      </div>
+                      <Landmark className="h-5 w-5 text-slate-500" />
+                    </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <Metric label="Invoice value" value={formatAmount(payload.amount, inviteCurrency)} />
+                      <Metric label="Requested advance" value={formatAmount(payload.requestedAdvance, inviteCurrency)} />
+                      <Metric label="Due date" value={stringValue(payload.dueDate)} />
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          <Card className="h-fit rounded-lg border-slate-200 shadow-sm">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-slate-100 p-2">
+                  <LockKeyhole className="h-5 w-5 text-slate-700" />
+                </div>
                 <div>
-                  <p className="font-medium">
-                    Confidential bid submitted for {submittedBid.invoice}.
+                  <h2 className="font-semibold text-slate-950">Submit a private bid</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Only the lender and supplier receive the FundingBid contract.
                   </p>
-                  <p className="mt-1 text-emerald-800">
-                    The supplier can now review this offer. Competing lenders
-                    cannot see these terms.
-                  </p>
-                  {ledgerSubmission ? (
-                    <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                      <div>
-                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                          Update ID
-                        </dt>
-                        <dd className="mt-1 break-all font-mono text-emerald-950">
-                          {ledgerSubmission.updateId || "Pending"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                          Offset
-                        </dt>
-                        <dd className="mt-1 font-mono text-emerald-950">
-                          {ledgerSubmission.completionOffset || "Pending"}
-                        </dd>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                          FundingBid contract
-                        </dt>
-                        <dd className="mt-1 break-all font-mono text-emerald-950">
-                          {ledgerSubmission.createdContractId || "Lookup pending"}
-                        </dd>
-                      </div>
-                    </dl>
-                  ) : null}
-                  {ledgerSubmission?.contractLookupWarning ? (
-                    <p className="mt-2 text-xs leading-5 text-emerald-800">
-                      Bid was submitted, but the contract ID lookup did not
-                      complete. Use the ledger proof query to retrieve the
-                      FundingBid contract before accepting.
-                    </p>
-                  ) : null}
                 </div>
               </div>
-            ) : null}
-          </div>
 
-          <div className="space-y-4">
-            <Card className="rounded-lg border-slate-200 bg-white shadow-sm">
-              <CardContent className="p-5">
-                <h2 className="text-lg font-semibold text-slate-950">
-                  Private bid terms
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Terms are disclosed only to the supplier and this lender in
-                  the CantonFlow workflow.
-                </p>
-
-                <form className="mt-5 space-y-4" onSubmit={submitBid}>
-                  <div className="space-y-2">
-                    <Label htmlFor="selectedInvoice">Invoice</Label>
-                    <Input id="selectedInvoice" value={selectedInvoice} readOnly />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="inviteContractId">
-                      LenderInvite contract ID
-                    </Label>
-                    <Input
-                      id="inviteContractId"
-                      value={form.inviteContractId}
-                      onChange={(event) =>
-                        updateField("inviteContractId", event.target.value)
-                      }
-                    />
-                    <p className="text-xs leading-5 text-slate-500">
-                      Populated after Supplier Upload creates a fresh
-                      LenderInvite. Replace this with the DevNet invite
-                      contract ID after deployment if testing manually.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                    <div className="space-y-2">
-                      <Label htmlFor="advance">Advance amount</Label>
-                      <Input
-                        id="advance"
-                        type="number"
-                        min="1"
-                        value={form.advance}
-                        onChange={(event) => updateField("advance", event.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="rate">Discount rate (%)</Label>
-                      <Input
-                        id="rate"
-                        type="number"
-                        min="0.1"
-                        step="0.1"
-                        value={form.rate}
-                        onChange={(event) => updateField("rate", event.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="term">Settlement days</Label>
-                      <Input
-                        id="term"
-                        type="number"
-                        min="1"
-                        value={form.term}
-                        onChange={(event) => updateField("term", event.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="note">Private note</Label>
-                    <Textarea
-                      id="note"
-                      value={form.note}
-                      onChange={(event) => updateField("note", event.target.value)}
-                    />
-                  </div>
-
-                  {error ? (
-                    <p className="text-sm font-medium text-red-600">
-                      {error}
-                    </p>
-                  ) : null}
-
-                  {ledgerError ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                      <p className="break-words">
-                        {ledgerError}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <Button className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Submitting to ledger
-                      </>
-                    ) : (
-                      "Submit confidential bid"
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-lg border-slate-200 bg-slate-950 text-white shadow-sm">
-              <CardContent className="space-y-5 p-5">
-                <div className="w-fit rounded-lg bg-white/10 p-3">
-                  <Landmark className="h-5 w-5" />
-                </div>
-
+              <form className="mt-6 space-y-5" onSubmit={submitBid}>
                 <div>
-                  <h2 className="font-semibold">
-                    Lender privacy boundary
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    This view hides supplier identity, invoice PDF, and other
-                    lenders&apos; bids until the workflow permits disclosure.
-                  </p>
+                  <Label htmlFor="advance">Advance amount</Label>
+                  <Input id="advance" type="number" min="1" value={form.advance} onChange={(event) => updateField("advance", event.target.value)} />
                 </div>
+                <div>
+                  <Label htmlFor="rate">Discount rate (%)</Label>
+                  <Input id="rate" type="number" min="0.1" step="0.1" value={form.rate} onChange={(event) => updateField("rate", event.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="term">Settlement days</Label>
+                  <Input id="term" type="number" min="1" value={form.term} onChange={(event) => updateField("term", event.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="note">Lender note</Label>
+                  <Textarea id="note" value={form.note} onChange={(event) => updateField("note", event.target.value)} />
+                </div>
+                <Button className="w-full" disabled={!selectedInvite || isSubmitting}>
+                  {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Submitting to ledger</> : "Submit confidential bid"}
+                </Button>
+              </form>
 
-                <div className="space-y-3 border-t border-white/10 pt-5">
-                  <PrivacyLine icon={<LockKeyhole className="h-4 w-4" />} text="Bid terms remain private" />
-                  <PrivacyLine icon={<EyeOff className="h-4 w-4" />} text="Competing offers are hidden" />
+              {submission ? (
+                <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                  <div className="flex gap-3"><CheckCircle2 className="h-5 w-5 shrink-0" /><div>
+                    <p className="font-medium">FundingBid created on-ledger.</p>
+                    <p className="mt-2 break-all font-mono text-xs">{submission.createdContractId || "Contract lookup pending"}</p>
+                  </div></div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+
+        {!isLoading && submittedBids.length > 0 ? (
+          <Card className="rounded-lg border-slate-200 shadow-sm">
+            <CardContent className="p-5">
+              <h2 className="font-semibold text-slate-950">Your active bids</h2>
+              <div className="mt-4 space-y-3">
+                {submittedBids.map((bid) => (
+                  <div key={bid.contractId} className="rounded-lg border bg-slate-50 p-4 text-sm">
+                    <p className="font-medium text-slate-950">{stringValue(bid.payload.invoiceNumber)}</p>
+                    <p className="mt-1 text-slate-500">
+                      {formatAmount(bid.payload.advanceAmount, currency)} at {stringValue(bid.payload.discountRate)}%
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          <EyeOff className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+          Other lenders are not stakeholders in your FundingBid, so they cannot query its terms from Canton.
         </div>
       </div>
     </main>
   );
 }
 
-function Metric({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
-      <p className="mt-2 text-lg font-semibold text-slate-950">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function PrivacyLine({
-  icon,
-  text,
-}: {
-  icon: ReactNode;
-  text: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 text-sm text-slate-300">
-      {icon}
-      {text}
+    <div className="rounded-lg border bg-slate-50 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-medium text-slate-950">{value || "Not available"}</p>
     </div>
   );
 }

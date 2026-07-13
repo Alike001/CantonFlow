@@ -22,7 +22,7 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Atomic Settlement",
+    title: "Settlement Coordination",
     description:
       "Funding and settlement happen securely in one coordinated workflow.",
   },

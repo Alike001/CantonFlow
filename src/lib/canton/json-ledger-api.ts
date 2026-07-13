@@ -28,17 +28,27 @@ interface ActiveContractsRequest {
     filtersByParty: Record<string, never>;
     filtersForAnyParty: {
       cumulative: Array<{
-        identifierFilter: {
-          WildcardFilter: {
-            value: {
-              includeCreatedEventBlob: boolean;
+        identifierFilter:
+          | {
+              WildcardFilter: {
+                value: {
+                  includeCreatedEventBlob: boolean;
+                };
+              };
+            }
+          | {
+              TemplateFilter: {
+                value: {
+                  templateId: string;
+                  includeCreatedEventBlob: boolean;
+                };
+              };
             };
-          };
-        };
       }>;
     };
   };
   verbose: boolean;
+  eventFormat: null;
   activeAtOffset: number | string;
 }
 
@@ -51,6 +61,7 @@ export interface ActiveContractEntry {
         contractId?: string;
         templateId?: string;
         createArgument?: Record<string, unknown>;
+        createdAt?: string;
       };
     };
   };
@@ -136,25 +147,40 @@ export async function submitAndWait(
 export async function queryActiveContracts(
   config: CantonConfig,
   activeAtOffset: number | string,
+  templateIds?: string[],
 ): Promise<ActiveContractEntry[]> {
   const payload: ActiveContractsRequest = {
     filter: {
       filtersByParty: {},
       filtersForAnyParty: {
         cumulative: [
-          {
-            identifierFilter: {
-              WildcardFilter: {
-                value: {
-                  includeCreatedEventBlob: false,
+          ...(templateIds?.length
+            ? templateIds.map((templateId) => ({
+                identifierFilter: {
+                  TemplateFilter: {
+                    value: {
+                      templateId,
+                      includeCreatedEventBlob: false,
+                    },
+                  },
                 },
-              },
-            },
-          },
+              }))
+            : [
+                {
+                  identifierFilter: {
+                    WildcardFilter: {
+                      value: {
+                        includeCreatedEventBlob: false,
+                      },
+                    },
+                  },
+                },
+              ]),
         ],
       },
     },
     verbose: false,
+    eventFormat: null,
     activeAtOffset,
   };
 
@@ -182,6 +208,53 @@ export async function queryActiveContracts(
   }
 
   return response.json() as Promise<ActiveContractEntry[]>;
+}
+
+export async function getLedgerEnd(config: CantonConfig): Promise<number | string> {
+  const headers: Record<string, string> = {};
+
+  if (config.ledgerApiToken) {
+    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
+  }
+
+  const response = await fetch(
+    `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/ledger-end`,
+    {
+      method: "GET",
+      headers,
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Canton JSON API ledger-end failed (${response.status}): ${body}`);
+  }
+
+  const payload = (await response.json()) as unknown;
+
+  if (typeof payload === "string" || typeof payload === "number") {
+    return payload;
+  }
+
+  if (payload && typeof payload === "object") {
+    const candidate = payload as Record<string, unknown>;
+    const offset = candidate.offset ?? candidate.ledgerEnd ?? candidate.ledgerEndOffset;
+
+    if (typeof offset === "string" || typeof offset === "number") {
+      return offset;
+    }
+  }
+
+  throw new Error("Canton JSON API ledger-end response did not contain an offset");
+}
+
+export async function queryCurrentActiveContracts(
+  config: CantonConfig,
+  templateIds?: string[],
+) {
+  const ledgerEnd = await getLedgerEnd(config);
+  return queryActiveContracts(config, ledgerEnd, templateIds);
 }
 
 export function findCreatedContractIdAtOffset(
