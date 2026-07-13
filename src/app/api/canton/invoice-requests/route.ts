@@ -13,6 +13,7 @@ const invoiceRequestSchema = z.object({
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   requestedAdvance: z.string().min(1),
   minimumDiscountRate: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(160).optional(),
 });
 
 export async function POST(request: Request) {

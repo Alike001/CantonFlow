@@ -16,6 +16,7 @@ export interface CreateInvoiceRequestInput {
   dueDate: string;
   requestedAdvance: string;
   minimumDiscountRate: string;
+  idempotencyKey?: string;
 }
 
 export function createInvoiceRequestArguments(
@@ -43,7 +44,7 @@ export async function createInvoiceRequestOnLedger(
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-invoice-request",
-    commandIdPrefix: "invoice-request",
+    commandId: `cantonflow-invoice-request-${input.idempotencyKey || input.invoiceId}`,
     actAs: [config.parties.supplier],
     commands: [
       buildCreateCommand(
@@ -87,11 +88,11 @@ export async function createInvoiceRequestOnLedger(
 
 export async function inviteLenderOnLedger(
   config: CantonConfig,
-  input: { invoiceRequestContractId: string },
+  input: { invoiceRequestContractId: string; idempotencyKey?: string },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-invite-lender",
-    commandIdPrefix: "invite-lender",
+    commandId: `cantonflow-invite-lender-${input.idempotencyKey || input.invoiceRequestContractId}`,
     actAs: [config.parties.supplier],
     commands: [
       buildExerciseCommand(
@@ -135,11 +136,12 @@ export async function submitFundingBidOnLedger(
     settlementDays: string | number;
     lenderNote: string;
     submittedAt: string;
+    idempotencyKey?: string;
   },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-submit-funding-bid",
-    commandIdPrefix: "submit-funding-bid",
+    commandId: `cantonflow-submit-funding-bid-${input.idempotencyKey || input.lenderInviteContractId}`,
     actAs: [config.parties.lender],
     commands: [
       buildExerciseCommand(
@@ -182,11 +184,11 @@ export async function submitFundingBidOnLedger(
 
 export async function acceptFundingBidOnLedger(
   config: CantonConfig,
-  input: { fundingBidContractId: string; acceptedAt: string },
+  input: { fundingBidContractId: string; acceptedAt: string; idempotencyKey?: string },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-accept-funding-bid",
-    commandIdPrefix: "accept-funding-bid",
+    commandId: `cantonflow-accept-funding-bid-${input.idempotencyKey || input.fundingBidContractId}`,
     actAs: [config.parties.supplier],
     commands: [
       buildExerciseCommand(
@@ -227,11 +229,12 @@ export async function prepareSettlementOnLedger(
     fundingAgreementContractId: string;
     settlementReference: string;
     preparedAt: string;
+    idempotencyKey?: string;
   },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-prepare-settlement",
-    commandIdPrefix: "prepare-settlement",
+    commandId: `cantonflow-prepare-settlement-${input.idempotencyKey || input.fundingAgreementContractId}`,
     actAs: [config.parties.supplier, config.parties.lender],
     commands: [
       buildExerciseCommand(

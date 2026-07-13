@@ -6,6 +6,7 @@ import { inviteLenderOnLedger } from "@/lib/canton/cantonflow-commands";
 
 const inviteSchema = z.object({
   invoiceRequestContractId: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(160).optional(),
 });
 
 export async function POST(request: Request) {

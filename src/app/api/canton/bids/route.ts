@@ -11,6 +11,7 @@ const bidSchema = z.object({
   settlementDays: z.union([z.string().min(1), z.number().int().positive()]),
   lenderNote: z.string().min(1),
   submittedAt: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(160).optional(),
 });
 
 export async function POST(request: Request) {

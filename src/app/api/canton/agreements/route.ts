@@ -7,6 +7,7 @@ import { acceptFundingBidOnLedger } from "@/lib/canton/cantonflow-commands";
 const agreementSchema = z.object({
   fundingBidContractId: z.string().min(1),
   acceptedAt: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(160).optional(),
 });
 
 export async function POST(request: Request) {

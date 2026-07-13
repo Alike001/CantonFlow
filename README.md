@@ -61,10 +61,12 @@ Implemented:
 
 ```bash
 npm install
-npm run dev
+npm run local:up
 ```
 
-Open `http://localhost:3000`.
+This starts the local Canton sandbox, provisions local parties, writes ignored `.env.local` values, and starts the app. Open `http://localhost:3000`.
+
+Prerequisites: Node.js, a JDK, and `curl`. The first run downloads the Daml tooling through the project setup script.
 
 ## Verification
 

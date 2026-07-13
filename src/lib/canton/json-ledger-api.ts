@@ -97,12 +97,12 @@ export async function submitAndWait(
   params: {
     commands: JsonObject[];
     workflowId: string;
-    commandIdPrefix: string;
+    commandId: string;
     actAs: string[];
     readAs?: string[];
   },
 ): Promise<SubmitAndWaitResponse> {
-  const commandId = `${params.commandIdPrefix}-${Date.now()}`;
+  const commandId = params.commandId;
   const payload: SubmitAndWaitRequest = {
     commands: params.commands,
     workflowId: params.workflowId,

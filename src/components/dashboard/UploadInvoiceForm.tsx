@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -53,6 +53,7 @@ export default function UploadInvoiceForm() {
   const [submission, setSubmission] = useState<LedgerSubmission | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const invoiceSubmissionKey = useRef<string | null>(null);
 
   const financingRatio = useMemo(() => {
     const amount = Number(form.amount);
@@ -74,6 +75,7 @@ export default function UploadInvoiceForm() {
     }));
     setSubmission(null);
     setSubmitError(null);
+    invoiceSubmissionKey.current = null;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -99,6 +101,8 @@ export default function UploadInvoiceForm() {
     setSubmission(null);
     setSubmitError(null);
     setIsSubmitting(true);
+    const idempotencyKey = invoiceSubmissionKey.current || crypto.randomUUID();
+    invoiceSubmissionKey.current = idempotencyKey;
 
     try {
       const response = await fetch("/api/canton/invoice-requests", {
@@ -115,6 +119,7 @@ export default function UploadInvoiceForm() {
           dueDate: result.data.dueDate,
           requestedAdvance: result.data.requestedAmount.toFixed(1),
           minimumDiscountRate: result.data.minimumRate.toFixed(1),
+          idempotencyKey,
         }),
       });
 
@@ -137,6 +142,7 @@ export default function UploadInvoiceForm() {
         },
         body: JSON.stringify({
           invoiceRequestContractId: payload.createdContractId,
+          idempotencyKey: `invite-${idempotencyKey}`,
         }),
       });
 
@@ -158,6 +164,7 @@ export default function UploadInvoiceForm() {
         inviteCompletionOffset: invitePayload.completionOffset,
         lenderInviteContractId: invitePayload.createdContractId,
       });
+      invoiceSubmissionKey.current = null;
     } catch (error) {
       setSubmitError(
         error instanceof Error

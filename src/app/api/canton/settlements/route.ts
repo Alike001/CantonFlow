@@ -8,6 +8,7 @@ const settlementSchema = z.object({
   fundingAgreementContractId: z.string().min(1),
   settlementReference: z.string().min(1),
   preparedAt: z.string().min(1),
+  idempotencyKey: z.string().min(1).max(160).optional(),
 });
 
 export async function POST(request: Request) {

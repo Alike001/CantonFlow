@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:daml": "bash scripts/test-daml.sh"
+    "test:daml": "bash scripts/test-daml.sh",
+    "local:up": "bash scripts/start-local-stack.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -61,6 +61,7 @@ export default function LenderBidWorkspace() {
   const [submission, setSubmission] = useState<LedgerSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const bidSubmissionKey = useRef<string | null>(null);
 
   const invites = useMemo(
     () => contracts.filter((contract) => contract.template === "LenderInvite"),
@@ -119,6 +120,7 @@ export default function LenderBidWorkspace() {
     setForm((current) => ({ ...current, [field]: value }));
     setError("");
     setSubmission(null);
+    bidSubmissionKey.current = null;
   }
 
   async function submitBid(event: FormEvent<HTMLFormElement>) {
@@ -137,6 +139,8 @@ export default function LenderBidWorkspace() {
     setIsSubmitting(true);
     setError("");
     setSubmission(null);
+    const idempotencyKey = bidSubmissionKey.current || crypto.randomUUID();
+    bidSubmissionKey.current = idempotencyKey;
 
     try {
       const response = await fetch("/api/canton/bids", {
@@ -149,6 +153,7 @@ export default function LenderBidWorkspace() {
           settlementDays: Number(form.term),
           lenderNote: form.note,
           submittedAt: new Date().toISOString(),
+          idempotencyKey,
         }),
       });
       const payload = (await response.json()) as LedgerSubmission & { error?: string };
@@ -158,6 +163,7 @@ export default function LenderBidWorkspace() {
       }
 
       setSubmission(payload);
+      bidSubmissionKey.current = null;
       await loadWorkspace();
     } catch (submissionError) {
       setError(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -49,6 +49,7 @@ export default function SupplierMarketplace() {
   const [isLoading, setIsLoading] = useState(true);
   const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
   const [submission, setSubmission] = useState<AgreementSubmission | null>(null);
+  const acceptanceKeys = useRef(new Map<string, string>());
 
   const bids = useMemo(
     () => contracts.filter((contract) => contract.template === "FundingBid"),
@@ -97,6 +98,8 @@ export default function SupplierMarketplace() {
     setAcceptingBidId(bid.contractId);
     setError("");
     setSubmission(null);
+    const idempotencyKey = acceptanceKeys.current.get(bid.contractId) || crypto.randomUUID();
+    acceptanceKeys.current.set(bid.contractId, idempotencyKey);
 
     try {
       const response = await fetch("/api/canton/agreements", {
@@ -105,6 +108,7 @@ export default function SupplierMarketplace() {
         body: JSON.stringify({
           fundingBidContractId: bid.contractId,
           acceptedAt: new Date().toISOString(),
+          idempotencyKey,
         }),
       });
       const payload = (await response.json()) as AgreementSubmission;
@@ -114,6 +118,7 @@ export default function SupplierMarketplace() {
       }
 
       setSubmission(payload);
+      acceptanceKeys.current.delete(bid.contractId);
       await loadWorkspace();
     } catch (acceptError) {
       setError(
