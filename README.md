@@ -24,7 +24,7 @@ Implemented:
 - Role entry with supplier, lender, and regulator workspaces
 - Supplier dashboard with responsive layout
 - KPI cards, recent invoice table, and activity stream
-- Working upload invoice form with validation and success state
+- Working upload invoice form with validation, ledger submission, and update ID display
 - Lender workspace for submitting confidential financing bids
 - Supplier marketplace for reviewing and accepting private offers
 - DAML contract model for invoice requests, private bids, funding agreements, and settlement instructions
@@ -37,7 +37,7 @@ Implemented:
 2. Click `Launch Product`.
 3. Choose a role on the entry screen.
 4. Continue as Supplier to review the dashboard.
-5. Open `Upload` and submit the prefilled invoice form.
+5. Open `Upload` and submit the prefilled invoice form to the Canton JSON API route.
 6. Open `Marketplace`.
 7. Switch to Lender and submit a confidential bid.
 8. Return as Supplier and accept the private offer.

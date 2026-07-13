@@ -42,7 +42,7 @@ The product is designed around those strengths instead of generic crypto wallet 
 
 - Responsive landing page
 - Supplier dashboard
-- Upload invoice flow with validation
+- Upload invoice flow with validation and ledger update ID display
 - Confidential marketplace screen
 - Lender bid submission workflow
 - Supplier bid acceptance state

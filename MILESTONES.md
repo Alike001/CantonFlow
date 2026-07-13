@@ -6,7 +6,7 @@
 - Capture DevNet proof: package ID, update IDs, and screenshots.
 - Deploy live product and add the URL to the README.
 - Record the 3-minute pitch/product video.
-- Connect frontend actions to the DAML JSON API.
+- Wire lender bid, supplier acceptance, and settlement UI actions to the DAML JSON API.
 - Add invoice detail page with visibility rules.
 - Add basic test coverage for upload validation and route rendering.
 
@@ -15,7 +15,7 @@
 - Repeat the verified local ledger flow on the Seaport shared DevNet validator.
 - Deploy the compiled DAR to Canton DevNet.
 - Capture DevNet update IDs for invoice request, lender invite, funding bid, agreement, and settlement.
-- Replace browser-side bid adapter with DAML-backed commands.
+- Replace remaining browser-side bid adapter screens with DAML-backed commands.
 - Simulate or connect atomic settlement workflow.
 
 ## Product Polish

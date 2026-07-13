@@ -1,7 +1,14 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { CheckCircle2, FileText, LockKeyhole, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  LockKeyhole,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +26,12 @@ type FormState = {
   minimumRate: string;
 };
 
+type LedgerSubmission = {
+  status?: string;
+  updateId?: string;
+  completionOffset?: string | number;
+};
+
 const initialFormState: FormState = {
   invoiceNumber: "INV-2026-004",
   buyer: "Northstar Components Ltd.",
@@ -32,7 +45,9 @@ const initialFormState: FormState = {
 export default function UploadInvoiceForm() {
   const [form, setForm] = useState<FormState>(initialFormState);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submission, setSubmission] = useState<LedgerSubmission | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const financingRatio = useMemo(() => {
     const amount = Number(form.amount);
@@ -52,10 +67,11 @@ export default function UploadInvoiceForm() {
       ...current,
       [field]: undefined,
     }));
-    setSubmitted(false);
+    setSubmission(null);
+    setSubmitError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const result = invoiceSchema.safeParse(form);
@@ -69,12 +85,55 @@ export default function UploadInvoiceForm() {
       });
 
       setErrors(nextErrors);
-      setSubmitted(false);
+      setSubmission(null);
+      setSubmitError(null);
       return;
     }
 
     setErrors({});
-    setSubmitted(true);
+    setSubmission(null);
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/canton/invoice-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          invoiceId: `receivable-${result.data.invoiceNumber.toLowerCase()}`,
+          invoiceNumber: result.data.invoiceNumber,
+          buyerProfile: result.data.buyer,
+          amount: result.data.amount.toFixed(1),
+          currency: result.data.currency,
+          dueDate: result.data.dueDate,
+          requestedAdvance: result.data.requestedAmount.toFixed(1),
+          minimumDiscountRate: result.data.minimumRate.toFixed(1),
+          visibility: {
+            buyerVisibleToLenders: false,
+            invoicePdfVisibleToLenders: false,
+            regulatorCanSeeCommercialTerms: false,
+          },
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Invoice submission failed");
+      }
+
+      setSubmission(payload);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Invoice submission failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -193,21 +252,60 @@ export default function UploadInvoiceForm() {
               </div>
             </div>
 
-            {submitted ? (
+            {submission ? (
               <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
-                  <p className="font-medium">Invoice submitted for confidential bidding.</p>
+                  <p className="font-medium">
+                    InvoiceRequest created on-ledger.
+                  </p>
                   <p className="mt-1 text-emerald-800">
-                    Eligible lenders can now receive selectively disclosed deal
-                    terms in the marketplace.
+                    The supplier party created a CantonFlow invoice request for
+                    confidential lender bidding.
+                  </p>
+                  <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        Update ID
+                      </dt>
+                      <dd className="mt-1 break-all font-mono text-emerald-950">
+                        {submission.updateId || "Pending"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                        Offset
+                      </dt>
+                      <dd className="mt-1 font-mono text-emerald-950">
+                        {submission.completionOffset || "Pending"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            ) : null}
+
+            {submitError ? (
+              <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Ledger submission failed.</p>
+                  <p className="mt-1 break-words text-red-800">
+                    {submitError}
                   </p>
                 </div>
               </div>
             ) : null}
 
-            <Button className="w-full sm:w-auto">
-              Submit Invoice
+            <Button className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting to ledger
+                </>
+              ) : (
+                "Submit Invoice"
+              )}
             </Button>
           </form>
         </CardContent>
@@ -254,8 +352,8 @@ export default function UploadInvoiceForm() {
           <CardContent className="flex items-start gap-3 p-5">
             <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
             <p className="text-sm leading-6 text-slate-600">
-              The next milestone is wiring this flow to Canton contracts for
-              permissioned bidding and atomic settlement.
+              This form submits through the app server to Canton JSON API
+              routes, keeping ledger credentials out of the browser.
             </p>
           </CardContent>
         </Card>
