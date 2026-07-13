@@ -3,6 +3,7 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import StatCard from "@/components/dashboard/StatCard";
 import InvoiceTable from "@/components/dashboard/InvoiceTable";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import LedgerProofPanel from "@/components/dashboard/LedgerProofPanel";
 import {
   FileText,
   Wallet,
@@ -63,7 +64,10 @@ export default function SupplierPage() {
           <InvoiceTable />
         </section>
 
-        <RecentActivity />
+        <div className="space-y-6">
+          <LedgerProofPanel />
+          <RecentActivity />
+        </div>
       </div>
     </div>
   </DashboardLayout>

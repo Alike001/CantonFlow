@@ -50,6 +50,7 @@ The product is designed around those strengths instead of generic crypto wallet 
 - DAML contract model for the workflow lifecycle
 - Local Canton sandbox execution through JSON API routes
 - On-ledger local update IDs captured for invoice request, lender invite, bid, agreement, and settlement
+- Dashboard ledger proof panel for judge-visible protocol evidence
 - Navigation across all live routes
 - Production build passes
 

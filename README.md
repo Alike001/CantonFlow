@@ -24,6 +24,7 @@ Implemented:
 - Role entry with supplier, lender, and regulator workspaces
 - Supplier dashboard with responsive layout
 - KPI cards, recent invoice table, and activity stream
+- Supplier dashboard ledger proof panel with local update IDs
 - Working upload invoice form with validation, ledger submission, and update ID display
 - Lender workspace for submitting confidential financing bids
 - Supplier marketplace for reviewing and accepting private offers

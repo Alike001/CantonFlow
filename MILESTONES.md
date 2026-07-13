@@ -20,6 +20,7 @@
 
 ## Product Polish
 
+- Add DevNet/local environment switch label to the ledger proof panel.
 - Add empty/loading/error states across dashboard tables.
 - Add mobile QA screenshots.
 - Improve copy around compliance and audit visibility.
