@@ -68,6 +68,12 @@ This starts the local Canton sandbox, provisions local parties, writes ignored `
 
 Prerequisites: Node.js, a JDK, and `curl`. The first run downloads the Daml tooling through the project setup script.
 
+If a restarted local sandbox reports `UNKNOWN_SUBMITTERS`, stop Next.js and reprovision only the local parties:
+
+```bash
+LOCAL_REPROVISION_PARTIES=true npm run local:up
+```
+
 ## Verification
 
 ```bash

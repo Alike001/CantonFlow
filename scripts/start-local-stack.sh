@@ -8,6 +8,7 @@ PARTY_FILE="${ROOT_DIR}/tmp/cantonflow-local-parties.json"
 SANDBOX_LOG="${ROOT_DIR}/tmp/cantonflow-sandbox.log"
 SANDBOX_PID_FILE="${ROOT_DIR}/tmp/cantonflow-sandbox.pid"
 STARTED_SANDBOX=false
+REPROVISION_PARTIES="${LOCAL_REPROVISION_PARTIES:-false}"
 
 mkdir -p "${ROOT_DIR}/tmp"
 
@@ -35,7 +36,7 @@ else
   echo "Using existing local Canton sandbox on JSON API port ${JSON_API_PORT}."
 fi
 
-if [[ "${STARTED_SANDBOX}" == "true" || ! -s "${PARTY_FILE}" ]]; then
+if [[ "${STARTED_SANDBOX}" == "true" || "${REPROVISION_PARTIES}" == "true" || ! -s "${PARTY_FILE}" ]]; then
   echo "Provisioning local supplier, buyer, lender, and regulator parties..."
   bash "${ROOT_DIR}/scripts/setup-local-parties.sh"
 else
