@@ -13,7 +13,7 @@ CantonFlow focuses on the workflows institutions actually need:
 - Confidential lender bidding
 - Contract-level selective disclosure by participant role
 - Permissioned invoice financing workflows
-- DAML-modeled funding agreements, settlement coordination, and regulator audit events
+- DAML-modeled funding agreements, supplier-proposed/lender-confirmed settlement coordination, and regulator audit events
 - Professional UX for suppliers, lenders, and regulated finance teams
 
 ## Product Scope
@@ -30,7 +30,7 @@ Implemented:
 - Lender workspace for querying active invitations and submitting confidential financing bids
 - Supplier marketplace for querying private offers and accepting ledger-backed bids
 - Regulator workspace for querying metadata-only `WorkflowAuditEvent` contracts
-- DAML contract model for invoice requests, private bids, funding agreements, settlement coordination, and metadata-only audit events
+- DAML contract model for invoice requests, private bids, funding agreements, dual-party settlement coordination, and metadata-only audit events
 - Clean navigation across all live routes
 - Production build verification
 

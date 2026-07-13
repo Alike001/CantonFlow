@@ -17,7 +17,7 @@ testReceivablesRfqLifecycle = script do
   let invited = time (date 2026 Jul 11) 9 1 0
   let accepted = time (date 2026 Jul 11) 9 5 0
   let prepared = time (date 2026 Jul 11) 9 10 0
-  let settled = time (date 2026 Jul 11) 9 15 0
+  let confirmed = time (date 2026 Jul 11) 9 15 0
 
   invoiceRequest <- submit supplier do
     createCmd InvoiceRequest with
@@ -60,21 +60,23 @@ testReceivablesRfqLifecycle = script do
     exerciseCmd fundingBid AcceptBid with
       acceptedAt = accepted
 
-  settlementInstruction <- submitMulti [supplier, lender] [] do
-    exerciseCmd fundingAgreement PrepareSettlement with
+  settlementProposal <- submit supplier do
+    exerciseCmd fundingAgreement ProposeSettlement with
       settlementReference = "cantonflow-settlement-001"
       preparedAt = prepared
 
-  submitMulti [supplier, lender] [] do
-    exerciseCmd settlementInstruction MarkSettled with
-      settledAt = settled
+  settlementInstruction <- submit lender do
+    exerciseCmd settlementProposal ConfirmSettlement with
+      confirmedAt = confirmed
 
   regulatorBids <- query @FundingBid regulator
   regulatorAgreements <- query @FundingAgreement regulator
+  regulatorSettlementProposals <- query @SettlementProposal regulator
   regulatorSettlements <- query @SettlementInstruction regulator
   regulatorAuditEvents <- query @WorkflowAuditEvent regulator
 
   assert (null regulatorBids)
   assert (null regulatorAgreements)
+  assert (null regulatorSettlementProposals)
   assert (null regulatorSettlements)
   assert (length regulatorAuditEvents == 6)

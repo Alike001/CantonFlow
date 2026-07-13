@@ -20,9 +20,13 @@ CantonFlow is a permissioned receivables financing RFQ. It uses separate Daml co
    - Supplier and winning lender are signatories.
    - Carries accepted commercial terms. The regulator is not a stakeholder.
 
-5. `SettlementInstruction`
-   - Supplier and lender are signatories.
-   - Records settlement coordination. It does not move money or claim atomic delivery-versus-payment.
+5. `SettlementProposal`
+   - Supplier signatory; winning lender observer.
+   - Holds a proposed settlement reference and awaits independent lender confirmation.
+
+6. `SettlementInstruction`
+   - Lender signatory; supplier observer.
+   - Records a lender-confirmed settlement coordination instruction. It does not move money or claim atomic delivery-versus-payment.
 
 ## Regulator Boundary
 
@@ -32,7 +36,7 @@ This gives the regulator a real Canton ledger view while preserving commercial c
 
 ## Frontend Mapping
 
-- `/supplier`: active `InvoiceRequest`, `FundingBid`, `FundingAgreement`, and `SettlementInstruction` contracts visible to the supplier party.
+- `/supplier`: active `InvoiceRequest`, `FundingBid`, `FundingAgreement`, `SettlementProposal`, and `SettlementInstruction` contracts visible to the supplier party.
 - `/supplier/upload`: creates an `InvoiceRequest`, an `InvoiceSubmitted` audit event, then a scoped `LenderInvite`.
 - `/lender`: reads active `LenderInvite` contracts visible to the lender party and exercises `SubmitFundingBid`.
 - `/supplier/marketplace`: reads supplier-visible `FundingBid` contracts and exercises `AcceptBid`.
@@ -48,4 +52,4 @@ npm run build
 npm run test:daml
 ```
 
-`npm run test:daml` runs a separate Daml Script package. It proves the full lifecycle and asserts that the regulator has no visible `FundingBid`, `FundingAgreement`, or `SettlementInstruction` contracts while receiving audit events.
+`npm run test:daml` runs a separate Daml Script package. It proves the full lifecycle and asserts that the regulator has no visible `FundingBid`, `FundingAgreement`, `SettlementProposal`, or `SettlementInstruction` contracts while receiving audit events.

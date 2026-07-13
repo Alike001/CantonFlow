@@ -9,6 +9,7 @@ export async function GET() {
       "InvoiceRequest",
       "FundingBid",
       "FundingAgreement",
+      "SettlementProposal",
       "SettlementInstruction",
     ]);
 

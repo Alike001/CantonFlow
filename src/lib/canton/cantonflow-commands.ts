@@ -223,7 +223,7 @@ export async function acceptFundingBidOnLedger(
   }
 }
 
-export async function prepareSettlementOnLedger(
+export async function proposeSettlementOnLedger(
   config: CantonConfig,
   input: {
     fundingAgreementContractId: string;
@@ -233,14 +233,14 @@ export async function prepareSettlementOnLedger(
   },
 ) {
   const result = await submitAndWait(config, {
-    workflowId: "cantonflow-prepare-settlement",
-    commandId: `cantonflow-prepare-settlement-${input.idempotencyKey || input.fundingAgreementContractId}`,
-    actAs: [config.parties.supplier, config.parties.lender],
+    workflowId: "cantonflow-propose-settlement",
+    commandId: `cantonflow-propose-settlement-${input.idempotencyKey || input.fundingAgreementContractId}`,
+    actAs: [config.parties.supplier],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "FundingAgreement"),
         input.fundingAgreementContractId,
-        "PrepareSettlement",
+        "ProposeSettlement",
         {
           settlementReference: input.settlementReference,
           preparedAt: input.preparedAt,
@@ -250,11 +250,11 @@ export async function prepareSettlementOnLedger(
   });
 
   try {
-    const settlementInstructionTemplateId = cantonTemplateId(config, "SettlementInstruction");
+    const settlementProposalTemplateId = cantonTemplateId(config, "SettlementProposal");
     const contracts = await queryActiveContracts(config, result.completionOffset);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
-      settlementInstructionTemplateId,
+      settlementProposalTemplateId,
       result.completionOffset,
     );
 
@@ -267,7 +267,7 @@ export async function prepareSettlementOnLedger(
       ...result,
       createdContractId: undefined,
       contractLookupWarning:
-        error instanceof Error ? error.message : "SettlementInstruction contract lookup failed",
+        error instanceof Error ? error.message : "SettlementProposal contract lookup failed",
     };
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getCantonConfig } from "@/lib/canton/config";
-import { prepareSettlementOnLedger } from "@/lib/canton/cantonflow-commands";
+import { proposeSettlementOnLedger } from "@/lib/canton/cantonflow-commands";
 
 const settlementSchema = z.object({
   fundingAgreementContractId: z.string().min(1),
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await prepareSettlementOnLedger(getCantonConfig("supplier"), parsed.data);
+    const result = await proposeSettlementOnLedger(getCantonConfig("supplier"), parsed.data);
     return NextResponse.json({ status: "submitted", ...result });
   } catch (error) {
     return NextResponse.json(
