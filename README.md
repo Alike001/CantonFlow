@@ -94,6 +94,36 @@ Local ledger execution:
 | `FundingAgreement` accepted | `122079df4bcb87e3e14ae5dda290c3101a128c1ddf425c5f9950695c67d69fe84139` | `26` |
 | `SettlementInstruction` prepared | `12209626362a513904a03fee188d79ec1e8e3d1fec2b2d2254dd652cf25ab02e06e0` | `29` |
 
+## Canton DevNet Proof
+
+Status: waiting for Seaport shared-validator access from the hackathon admin.
+
+The product is already wired to Canton JSON API routes and has been verified locally with the same Daml package and workflow shape intended for DevNet. Once access is granted, the `.env.devnet` values will be replaced with DevNet validator credentials and the full flow will be repeated on-ledger.
+
+Access request party ID sent to admin:
+
+```text
+37de9fd8a7c09e227c70f85c781542b8::1220bafc5cf456aa4fb394690836cb8151b67d6476ecfaf15f56cc2494f32a98fef0
+```
+
+DevNet proof checklist to replace after access:
+
+| Evidence | Current value |
+| --- | --- |
+| DevNet validator | Pending Seaport access |
+| DevNet JSON Ledger API URL | Pending Seaport access |
+| DAR package ID | `d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0` locally, replace with DevNet package ID if different |
+| Supplier party | Pending DevNet party |
+| Buyer party | Pending DevNet party |
+| Lender party | Pending DevNet party |
+| Regulator party | Pending DevNet party |
+| `InvoiceRequest` update ID | Pending DevNet execution |
+| `LenderInvite` update ID | Pending DevNet execution |
+| `FundingBid` update ID | Pending DevNet execution |
+| `FundingAgreement` update ID | Pending DevNet execution |
+| `SettlementInstruction` update ID | Pending DevNet execution |
+| Screenshots | Pending DevNet execution |
+
 DevNet proof will replace the local proof after Seaport shared-validator access is enabled for the project wallet.
 
 ## Remaining Milestones
