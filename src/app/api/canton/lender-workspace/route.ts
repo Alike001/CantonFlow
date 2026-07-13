@@ -9,6 +9,8 @@ export async function GET() {
       "LenderInvite",
       "FundingBid",
       "FundingAgreement",
+      "SettlementProposal",
+      "SettlementInstruction",
     ]);
 
     return NextResponse.json({ contracts });

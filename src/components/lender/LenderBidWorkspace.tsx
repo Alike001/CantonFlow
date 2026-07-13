@@ -61,7 +61,10 @@ export default function LenderBidWorkspace() {
   const [submission, setSubmission] = useState<LedgerSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmingProposalId, setConfirmingProposalId] = useState<string | null>(null);
+  const [settlementSubmission, setSettlementSubmission] = useState<LedgerSubmission | null>(null);
   const bidSubmissionKey = useRef<string | null>(null);
+  const settlementKeys = useRef(new Map<string, string>());
 
   const invites = useMemo(
     () => contracts.filter((contract) => contract.template === "LenderInvite"),
@@ -69,6 +72,10 @@ export default function LenderBidWorkspace() {
   );
   const submittedBids = useMemo(
     () => contracts.filter((contract) => contract.template === "FundingBid"),
+    [contracts],
+  );
+  const settlementProposals = useMemo(
+    () => contracts.filter((contract) => contract.template === "SettlementProposal"),
     [contracts],
   );
   const selectedInvite =
@@ -173,6 +180,43 @@ export default function LenderBidWorkspace() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function confirmSettlement(proposal: LedgerContract) {
+    setConfirmingProposalId(proposal.contractId);
+    setError("");
+    setSettlementSubmission(null);
+    const idempotencyKey = settlementKeys.current.get(proposal.contractId) || crypto.randomUUID();
+    settlementKeys.current.set(proposal.contractId, idempotencyKey);
+
+    try {
+      const response = await fetch("/api/canton/settlement-confirmations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settlementProposalContractId: proposal.contractId,
+          confirmedAt: new Date().toISOString(),
+          idempotencyKey,
+        }),
+      });
+      const payload = (await response.json()) as LedgerSubmission & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Settlement confirmation failed");
+      }
+
+      setSettlementSubmission(payload);
+      settlementKeys.current.delete(proposal.contractId);
+      await loadWorkspace();
+    } catch (confirmationError) {
+      setError(
+        confirmationError instanceof Error
+          ? confirmationError.message
+          : "Settlement confirmation failed",
+      );
+    } finally {
+      setConfirmingProposalId(null);
     }
   }
 
@@ -334,6 +378,40 @@ export default function LenderBidWorkspace() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && settlementProposals.length > 0 ? (
+          <Card className="rounded-lg border-slate-200 shadow-sm">
+            <CardContent className="p-5">
+              <h2 className="font-semibold text-slate-950">Settlement approvals</h2>
+              <p className="mt-1 text-sm text-slate-500">Confirm supplier proposals visible to this lender party.</p>
+              <div className="mt-4 space-y-3">
+                {settlementProposals.map((proposal) => {
+                  const isConfirming = confirmingProposalId === proposal.contractId;
+                  return (
+                    <div key={proposal.contractId} className="flex flex-col gap-3 rounded-lg border bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-medium text-slate-950">{stringValue(proposal.payload.invoiceNumber)}</p>
+                        <p className="mt-1 break-all text-xs text-slate-500">Reference: {stringValue(proposal.payload.settlementReference)}</p>
+                      </div>
+                      <Button size="sm" onClick={() => void confirmSettlement(proposal)} disabled={isConfirming}>
+                        {isConfirming ? <><Loader2 className="h-4 w-4 animate-spin" />Confirming</> : "Confirm settlement"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+              {settlementSubmission ? (
+                <div className="mt-4 flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="font-medium">SettlementInstruction created on-ledger.</p>
+                    <p className="mt-1 break-all font-mono text-xs">{settlementSubmission.createdContractId || "Contract lookup pending"}</p>
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         ) : null}

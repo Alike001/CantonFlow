@@ -48,8 +48,11 @@ export default function SupplierMarketplace() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
+  const [proposingAgreementId, setProposingAgreementId] = useState<string | null>(null);
   const [submission, setSubmission] = useState<AgreementSubmission | null>(null);
+  const [settlementSubmission, setSettlementSubmission] = useState<AgreementSubmission | null>(null);
   const acceptanceKeys = useRef(new Map<string, string>());
+  const settlementKeys = useRef(new Map<string, string>());
 
   const bids = useMemo(
     () => contracts.filter((contract) => contract.template === "FundingBid"),
@@ -131,6 +134,43 @@ export default function SupplierMarketplace() {
     }
   }
 
+  async function proposeSettlement(agreement: LedgerContract) {
+    setProposingAgreementId(agreement.contractId);
+    setError("");
+    setSettlementSubmission(null);
+    const idempotencyKey = settlementKeys.current.get(agreement.contractId) || crypto.randomUUID();
+    settlementKeys.current.set(agreement.contractId, idempotencyKey);
+
+    try {
+      const invoiceNumber = stringValue(agreement.payload.invoiceNumber) || "agreement";
+      const response = await fetch("/api/canton/settlements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fundingAgreementContractId: agreement.contractId,
+          settlementReference: `CF-${invoiceNumber}-${agreement.contractId.slice(-8)}`,
+          preparedAt: new Date().toISOString(),
+          idempotencyKey,
+        }),
+      });
+      const payload = (await response.json()) as AgreementSubmission;
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Settlement proposal failed");
+      }
+
+      setSettlementSubmission(payload);
+      settlementKeys.current.delete(agreement.contractId);
+      await loadWorkspace();
+    } catch (proposalError) {
+      setError(
+        proposalError instanceof Error ? proposalError.message : "Settlement proposal failed",
+      );
+    } finally {
+      setProposingAgreementId(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -154,6 +194,17 @@ export default function SupplierMarketplace() {
             <p className="font-medium">FundingAgreement created on-ledger.</p>
             <p className="mt-1 text-emerald-800">The bid is consumed and the supplier and winning lender now share the agreement.</p>
             <p className="mt-2 break-all font-mono text-xs">{submission.createdContractId || "Contract lookup pending"}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {settlementSubmission ? (
+        <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <p className="font-medium">SettlementProposal created on-ledger.</p>
+            <p className="mt-1 text-emerald-800">The selected lender can now confirm this coordination instruction.</p>
+            <p className="mt-2 break-all font-mono text-xs">{settlementSubmission.createdContractId || "Contract lookup pending"}</p>
           </div>
         </div>
       ) : null}
@@ -224,6 +275,30 @@ export default function SupplierMarketplace() {
               </p>
             </CardContent>
           </Card>
+
+          {agreements.length > 0 ? (
+            <Card className="rounded-lg border-slate-200 shadow-sm">
+              <CardContent className="p-5">
+                <h2 className="font-semibold text-slate-950">Settlement coordination</h2>
+                <div className="mt-4 space-y-3">
+                  {agreements.map((agreement) => {
+                    const isProposing = proposingAgreementId === agreement.contractId;
+                    return (
+                      <div key={agreement.contractId} className="flex items-center justify-between gap-3 rounded-lg border bg-slate-50 p-3">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-950">{stringValue(agreement.payload.invoiceNumber)}</p>
+                          <p className="mt-1 text-xs text-slate-500">Supplier proposal requires lender confirmation.</p>
+                        </div>
+                        <Button size="sm" onClick={() => void proposeSettlement(agreement)} disabled={isProposing}>
+                          {isProposing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Propose"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card className="rounded-lg border-slate-200 shadow-sm">
             <CardContent className="p-5">

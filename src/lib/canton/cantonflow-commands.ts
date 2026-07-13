@@ -271,3 +271,48 @@ export async function proposeSettlementOnLedger(
     };
   }
 }
+
+export async function confirmSettlementOnLedger(
+  config: CantonConfig,
+  input: {
+    settlementProposalContractId: string;
+    confirmedAt: string;
+    idempotencyKey?: string;
+  },
+) {
+  const result = await submitAndWait(config, {
+    workflowId: "cantonflow-confirm-settlement",
+    commandId: `cantonflow-confirm-settlement-${input.idempotencyKey || input.settlementProposalContractId}`,
+    actAs: [config.parties.lender],
+    commands: [
+      buildExerciseCommand(
+        cantonTemplateId(config, "SettlementProposal"),
+        input.settlementProposalContractId,
+        "ConfirmSettlement",
+        { confirmedAt: input.confirmedAt },
+      ),
+    ],
+  });
+
+  try {
+    const settlementInstructionTemplateId = cantonTemplateId(config, "SettlementInstruction");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      settlementInstructionTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "SettlementInstruction contract lookup failed",
+    };
+  }
+}
