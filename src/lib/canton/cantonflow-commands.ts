@@ -146,7 +146,7 @@ export async function acceptFundingBidOnLedger(
   config: CantonConfig,
   input: { fundingBidContractId: string; acceptedAt: string },
 ) {
-  return submitAndWait(config, {
+  const result = await submitAndWait(config, {
     workflowId: "cantonflow-accept-funding-bid",
     commandIdPrefix: "accept-funding-bid",
     actAs: [config.parties.supplier],
@@ -160,6 +160,28 @@ export async function acceptFundingBidOnLedger(
       ),
     ],
   });
+
+  try {
+    const fundingAgreementTemplateId = cantonTemplateId(config, "FundingAgreement");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      fundingAgreementTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "FundingAgreement contract lookup failed",
+    };
+  }
 }
 
 export async function prepareSettlementOnLedger(
@@ -170,7 +192,7 @@ export async function prepareSettlementOnLedger(
     preparedAt: string;
   },
 ) {
-  return submitAndWait(config, {
+  const result = await submitAndWait(config, {
     workflowId: "cantonflow-prepare-settlement",
     commandIdPrefix: "prepare-settlement",
     actAs: [config.parties.supplier, config.parties.lender],
@@ -187,4 +209,26 @@ export async function prepareSettlementOnLedger(
       ),
     ],
   });
+
+  try {
+    const settlementInstructionTemplateId = cantonTemplateId(config, "SettlementInstruction");
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const createdContractId = findCreatedContractIdAtOffset(
+      contracts,
+      settlementInstructionTemplateId,
+      result.completionOffset,
+    );
+
+    return {
+      ...result,
+      createdContractId,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      createdContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "SettlementInstruction contract lookup failed",
+    };
+  }
 }

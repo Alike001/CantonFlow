@@ -1,5 +1,7 @@
 export const DEMO_BIDS_STORAGE_KEY = "cantonflow:confidentialBids";
 export const ACCEPTED_BID_STORAGE_KEY = "cantonflow:acceptedBidId";
+export const FUNDING_AGREEMENT_STORAGE_KEY = "cantonflow:fundingAgreementContractId";
+export const SETTLEMENT_PROOF_STORAGE_KEY = "cantonflow:settlementProof";
 
 export interface ConfidentialBid {
   id: string;

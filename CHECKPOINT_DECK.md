@@ -46,6 +46,7 @@ The product is designed around those strengths instead of generic crypto wallet 
 - Confidential marketplace screen
 - Lender bid submission workflow wired to the Canton JSON API route
 - Supplier bid acceptance workflow wired to the Canton JSON API route for ledger-backed offers
+- Settlement preparation workflow wired to the Canton JSON API route
 - Regulator metadata-only view
 - DAML contract model for the workflow lifecycle
 - Local Canton sandbox execution through JSON API routes

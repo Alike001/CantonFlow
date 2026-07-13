@@ -17,6 +17,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ACCEPTED_BID_STORAGE_KEY,
   DEMO_BIDS_STORAGE_KEY,
+  FUNDING_AGREEMENT_STORAGE_KEY,
+  SETTLEMENT_PROOF_STORAGE_KEY,
   type ConfidentialBid,
   seedBids,
 } from "@/data/demoBids";
@@ -25,7 +27,13 @@ type AgreementSubmission = {
   status?: string;
   updateId?: string;
   completionOffset?: string | number;
+  createdContractId?: string;
+  contractLookupWarning?: string;
   error?: string;
+};
+
+type SettlementSubmission = AgreementSubmission & {
+  settlementReference?: string;
 };
 
 export default function SupplierMarketplace() {
@@ -42,8 +50,22 @@ export default function SupplierMarketplace() {
   });
   const [agreementSubmission, setAgreementSubmission] =
     useState<AgreementSubmission | null>(null);
+  const [settlementSubmission, setSettlementSubmission] =
+    useState<SettlementSubmission | null>(() => {
+      if (typeof window === "undefined") return null;
+
+      const stored = window.localStorage.getItem(SETTLEMENT_PROOF_STORAGE_KEY);
+      return stored ? (JSON.parse(stored) as SettlementSubmission) : null;
+    });
+  const [fundingAgreementContractId, setFundingAgreementContractId] =
+    useState<string>(() => {
+      if (typeof window === "undefined") return "";
+
+      return window.localStorage.getItem(FUNDING_AGREEMENT_STORAGE_KEY) || "";
+    });
   const [ledgerError, setLedgerError] = useState("");
   const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
+  const [preparingSettlementId, setPreparingSettlementId] = useState<string | null>(null);
 
   const offers = useMemo(() => {
     const storedIds = new Set(storedBids.map((bid) => bid.id));
@@ -56,10 +78,12 @@ export default function SupplierMarketplace() {
     setAcceptingBidId(offer.id);
     setLedgerError("");
     setAgreementSubmission(null);
+    setSettlementSubmission(null);
+    setFundingAgreementContractId("");
+    window.localStorage.removeItem(FUNDING_AGREEMENT_STORAGE_KEY);
+    window.localStorage.removeItem(SETTLEMENT_PROOF_STORAGE_KEY);
 
     try {
-      let payload: AgreementSubmission | null = null;
-
       if (offer.fundingBidContractId) {
         const response = await fetch("/api/canton/agreements", {
           method: "POST",
@@ -72,13 +96,21 @@ export default function SupplierMarketplace() {
           }),
         });
 
-        payload = await response.json();
+        const payload = (await response.json()) as AgreementSubmission;
 
         if (!response.ok) {
           throw new Error(payload?.error || "Ledger agreement submission failed");
         }
 
         setAgreementSubmission(payload);
+
+        if (payload.createdContractId) {
+          window.localStorage.setItem(
+            FUNDING_AGREEMENT_STORAGE_KEY,
+            payload.createdContractId,
+          );
+          setFundingAgreementContractId(payload.createdContractId);
+        }
       } else if (offer.source === "lender") {
         throw new Error(
           "This lender bid is missing a FundingBid contract ID. Submit the lender bid again, then accept the ledger-backed offer.",
@@ -98,6 +130,55 @@ export default function SupplierMarketplace() {
     }
   }
 
+  async function prepareSettlement(offer: ConfidentialBid) {
+    if (!fundingAgreementContractId) {
+      setLedgerError(
+        "This accepted offer is missing a FundingAgreement contract ID. Accept a ledger-backed bid before preparing settlement.",
+      );
+      return;
+    }
+
+    setPreparingSettlementId(offer.id);
+    setLedgerError("");
+
+    try {
+      const settlementReference = `CF-SETTLE-${Date.now()}`;
+      const response = await fetch("/api/canton/settlements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fundingAgreementContractId,
+          settlementReference,
+          preparedAt: new Date().toISOString(),
+        }),
+      });
+
+      const payload = (await response.json()) as SettlementSubmission;
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Ledger settlement submission failed");
+      }
+
+      const proof = {
+        ...payload,
+        settlementReference,
+      };
+
+      window.localStorage.setItem(SETTLEMENT_PROOF_STORAGE_KEY, JSON.stringify(proof));
+      setSettlementSubmission(proof);
+    } catch (error) {
+      setLedgerError(
+        error instanceof Error
+          ? error.message
+          : "Ledger settlement submission failed",
+      );
+    } finally {
+      setPreparingSettlementId(null);
+    }
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <div className="space-y-4">
@@ -105,6 +186,7 @@ export default function SupplierMarketplace() {
           const isAccepted = acceptedBidId === offer.id;
           const isLenderSubmitted = offer.source === "lender";
           const isAccepting = acceptingBidId === offer.id;
+          const isPreparingSettlement = preparingSettlementId === offer.id;
 
           return (
             <Card key={offer.id} className="rounded-lg border-slate-200 shadow-sm">
@@ -163,7 +245,7 @@ export default function SupplierMarketplace() {
                 {isAccepted ? (
                   <div className="mt-4 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium">
                         Funding agreement prepared.
                       </p>
@@ -188,6 +270,89 @@ export default function SupplierMarketplace() {
                             </dt>
                             <dd className="mt-1 font-mono text-emerald-950">
                               {agreementSubmission.completionOffset || "Pending"}
+                            </dd>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              FundingAgreement contract
+                            </dt>
+                            <dd className="mt-1 break-all font-mono text-emerald-950">
+                              {agreementSubmission.createdContractId || "Lookup pending"}
+                            </dd>
+                          </div>
+                        </dl>
+                      ) : null}
+
+                      {agreementSubmission?.contractLookupWarning ? (
+                        <p className="mt-2 text-xs leading-5 text-emerald-800">
+                          Agreement was submitted, but the contract ID lookup
+                          did not complete. Query active contracts before
+                          preparing settlement.
+                        </p>
+                      ) : null}
+
+                      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Button
+                          size="sm"
+                          disabled={
+                            !offer.fundingBidContractId ||
+                            !fundingAgreementContractId ||
+                            Boolean(settlementSubmission) ||
+                            isPreparingSettlement
+                          }
+                          onClick={() => prepareSettlement(offer)}
+                        >
+                          {isPreparingSettlement ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Preparing settlement
+                            </>
+                          ) : settlementSubmission ? (
+                            "Settlement prepared"
+                          ) : (
+                            "Prepare settlement"
+                          )}
+                        </Button>
+
+                        {!fundingAgreementContractId && offer.fundingBidContractId ? (
+                          <p className="text-xs leading-5 text-emerald-800">
+                            Agreement contract ID required before settlement.
+                          </p>
+                        ) : null}
+                      </div>
+
+                      {settlementSubmission ? (
+                        <dl className="mt-4 grid gap-2 rounded-lg border border-emerald-200 bg-white/60 p-3 text-xs sm:grid-cols-2">
+                          <div>
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              Settlement reference
+                            </dt>
+                            <dd className="mt-1 break-all font-mono text-emerald-950">
+                              {settlementSubmission.settlementReference}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              Offset
+                            </dt>
+                            <dd className="mt-1 font-mono text-emerald-950">
+                              {settlementSubmission.completionOffset || "Pending"}
+                            </dd>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              SettlementInstruction update
+                            </dt>
+                            <dd className="mt-1 break-all font-mono text-emerald-950">
+                              {settlementSubmission.updateId || "Pending"}
+                            </dd>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <dt className="font-semibold uppercase tracking-wide text-emerald-700">
+                              SettlementInstruction contract
+                            </dt>
+                            <dd className="mt-1 break-all font-mono text-emerald-950">
+                              {settlementSubmission.createdContractId || "Lookup pending"}
                             </dd>
                           </div>
                         </dl>

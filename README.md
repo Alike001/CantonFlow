@@ -27,7 +27,7 @@ Implemented:
 - Supplier dashboard ledger proof panel with local update IDs
 - Working upload invoice form with validation, ledger submission, and update ID display
 - Lender workspace for submitting confidential financing bids to the Canton JSON API route
-- Supplier marketplace for reviewing private offers and accepting ledger-backed bids
+- Supplier marketplace for reviewing private offers, accepting ledger-backed bids, and preparing settlement instructions
 - DAML contract model for invoice requests, private bids, funding agreements, and settlement instructions
 - Clean navigation across all live routes
 - Production build verification

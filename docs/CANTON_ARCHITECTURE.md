@@ -56,7 +56,7 @@ This workflow is a strong fit for Canton because invoice financing requires priv
 - `/supplier/marketplace`: maps to `FundingBid` and `AcceptBid`.
 - `/regulator`: maps to regulator observer visibility.
 
-The app includes a server-side Canton JSON API adapter under `src/lib/canton` and route handlers under `/api/canton`. Browser code does not hold ledger tokens. Supplier invoice upload, lender bid submission, and supplier acceptance for ledger-backed bids are wired to those routes; the remaining integration work is settlement UI actions and DevNet read models after validator credentials are available.
+The app includes a server-side Canton JSON API adapter under `src/lib/canton` and route handlers under `/api/canton`. Browser code does not hold ledger tokens. Supplier invoice upload, lender bid submission, supplier acceptance for ledger-backed bids, and settlement preparation are wired to those routes. The remaining integration work is DevNet read models after validator credentials are available.
 
 ## Verification
 
