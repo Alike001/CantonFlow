@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, CircleUserRound, HandCoins, LayoutDashboard, Upload } from "lucide-react";
+import { Bell, CircleUserRound, FilePlus2, HandCoins, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 
 import { getGreeting } from "@/utils/greeting";
 
 const mobileLinks = [
   { title: "Dashboard", href: "/supplier", icon: LayoutDashboard },
-  { title: "Upload", href: "/supplier/upload", icon: Upload },
+  { title: "Create RFQ", href: "/supplier/upload", icon: FilePlus2 },
   { title: "Marketplace", href: "/supplier/marketplace", icon: HandCoins },
 ];
 

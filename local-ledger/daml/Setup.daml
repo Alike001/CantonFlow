@@ -7,7 +7,8 @@ data CantonFlowParties = CantonFlowParties
     supplier : Party
     buyer : Party
     regulator : Party
-    lender : Party
+    lenderA : Party
+    lenderB : Party
   deriving (Eq, Show)
 
 setupParties : Script CantonFlowParties
@@ -15,13 +16,15 @@ setupParties = script do
   supplier <- createParty "supplier"
   buyer <- createParty "buyer"
   regulator <- createParty "regulator"
-  lender <- createParty "lender"
+  lenderA <- createParty "lender-a"
+  lenderB <- createParty "lender-b"
 
   pure CantonFlowParties with
     supplier
     buyer
     regulator
-    lender
+    lenderA
+    lenderB
 
 createParty : Text -> Script Party
 createParty name = do

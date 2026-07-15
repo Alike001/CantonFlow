@@ -7,7 +7,7 @@ export default function MarketplacePage() {
     <DashboardLayout>
       <PageHeader
         title="Confidential Marketplace"
-        description="Review private lender offers without exposing competing bids or sensitive invoice documents."
+        description="Review private lender offers without exposing competing bids or buyer legal identity."
       />
 
       <SupplierMarketplace />

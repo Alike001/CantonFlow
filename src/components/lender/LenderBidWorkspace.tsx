@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -53,7 +53,7 @@ function formatAmount(value: unknown, currency = "USD") {
   }).format(amount);
 }
 
-export default function LenderBidWorkspace() {
+export default function LenderBidWorkspace({ lender = "lenderA" }: { lender?: "lenderA" | "lenderB" }) {
   const [contracts, setContracts] = useState<LedgerContract[]>([]);
   const [selectedInviteId, setSelectedInviteId] = useState("");
   const [form, setForm] = useState(initialForm);
@@ -81,12 +81,12 @@ export default function LenderBidWorkspace() {
   const selectedInvite =
     invites.find((invite) => invite.contractId === selectedInviteId) || invites[0];
 
-  async function loadWorkspace() {
+  const loadWorkspace = useCallback(async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/canton/lender-workspace", {
+      const response = await fetch(`/api/canton/lender-workspace?lender=${lender}`, {
         cache: "no-store",
       });
       const payload = (await response.json()) as {
@@ -116,12 +116,12 @@ export default function LenderBidWorkspace() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [lender]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => { void loadWorkspace(); }, 0);
     return () => window.clearTimeout(initial);
-  }, []);
+  }, [loadWorkspace]);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -160,6 +160,7 @@ export default function LenderBidWorkspace() {
           settlementDays: Number(form.term),
           lenderNote: form.note,
           submittedAt: new Date().toISOString(),
+          lender,
           idempotencyKey,
         }),
       });
@@ -197,6 +198,7 @@ export default function LenderBidWorkspace() {
         body: JSON.stringify({
           settlementProposalContractId: proposal.contractId,
           confirmedAt: new Date().toISOString(),
+          lender,
           idempotencyKey,
         }),
       });

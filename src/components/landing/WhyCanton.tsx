@@ -16,9 +16,9 @@ const comparisons = [
     icon: LockKeyhole,
   },
   {
-    title: "Regulatory Compliance",
+    title: "Operational Oversight",
     description:
-      "Regulators can access compliance data without exposing commercial details.",
+      "Regulators can receive lifecycle metadata without commercial terms.",
     icon: Scale,
   },
   {

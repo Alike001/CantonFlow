@@ -24,7 +24,7 @@ const features = [
     icon: Zap,
     title: "Settlement Coordination",
     description:
-      "Funding and settlement happen securely in one coordinated workflow.",
+      "Supplier and lender coordinate the next settlement step in a shared workflow.",
   },
   {
     icon: Building2,

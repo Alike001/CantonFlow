@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Upload } from "lucide-react";
+import { ArrowRight, FilePlus2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export default function WelcomeBanner() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-            Upload an invoice, receive confidential financing offers,
+            Create a receivables RFQ, receive confidential financing offers,
             and coordinate settlement with Canton Network&apos;s privacy-preserving
             workflow infrastructure.
           </p>
@@ -31,8 +31,8 @@ export default function WelcomeBanner() {
               variant="secondary"
               className="gap-2"
             >
-              <Upload className="h-4 w-4" />
-              Upload Invoice
+              <FilePlus2 className="h-4 w-4" />
+              Create RFQ
             </Button>
           </Link>
 

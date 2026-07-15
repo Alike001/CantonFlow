@@ -131,11 +131,13 @@ LEDGER_API_TOKEN=...
 JSON_LEDGER_API_URL=http://json-ledger-api.localhost:8080
 CANTONFLOW_PACKAGE_ID=<main package id from inspect-dar>
 CANTONFLOW_SUPPLIER_USER_ID=<supplier user id>
-CANTONFLOW_LENDER_USER_ID=<lender user id>
+CANTONFLOW_LENDER_A_USER_ID=<lender A user id>
+CANTONFLOW_LENDER_B_USER_ID=<lender B user id>
 CANTONFLOW_SUPPLIER_PARTY=<supplier party>
 CANTONFLOW_BUYER_PARTY=<buyer party>
 CANTONFLOW_REGULATOR_PARTY=<regulator party>
-CANTONFLOW_LENDER_PARTY=<lender party>
+CANTONFLOW_LENDER_A_PARTY=<lender A party>
+CANTONFLOW_LENDER_B_PARTY=<lender B party>
 DAR_PATH=.daml/dist/cantonflow-0.1.0.dar
 ```
 
@@ -170,7 +172,7 @@ curl -X POST http://localhost:3000/api/canton/invoice-requests \
     "currency": "USD",
     "dueDate": "2026-08-30",
     "requestedAdvance": "252000.0",
-    "minimumDiscountRate": "4.5"
+    "maximumDiscountRate": "4.5"
   }'
 ```
 
@@ -214,11 +216,13 @@ CANTONFLOW_PACKAGE_ID=d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a0
 CANTONFLOW_SUPPLIER_USER_ID=supplier
 CANTONFLOW_BUYER_USER_ID=buyer
 CANTONFLOW_REGULATOR_USER_ID=regulator
-CANTONFLOW_LENDER_USER_ID=lender
+CANTONFLOW_LENDER_A_USER_ID=lender-a
+CANTONFLOW_LENDER_B_USER_ID=lender-b
 CANTONFLOW_SUPPLIER_PARTY=<supplier from tmp/cantonflow-local-parties.json>
 CANTONFLOW_BUYER_PARTY=<buyer from tmp/cantonflow-local-parties.json>
 CANTONFLOW_REGULATOR_PARTY=<regulator from tmp/cantonflow-local-parties.json>
-CANTONFLOW_LENDER_PARTY=<lender from tmp/cantonflow-local-parties.json>
+CANTONFLOW_LENDER_A_PARTY=<lenderA from tmp/cantonflow-local-parties.json>
+CANTONFLOW_LENDER_B_PARTY=<lenderB from tmp/cantonflow-local-parties.json>
 ```
 
 Then run:
@@ -256,7 +260,7 @@ Capture these artifacts:
 - At least one created `InvoiceRequest` contract on DevNet.
 - At least one exercised `SubmitFundingBid` choice.
 - At least one exercised `AcceptBid` choice creating `FundingAgreement`.
-- Optional: `PrepareSettlement` creating `SettlementInstruction`.
+- Optional: supplier settlement proposal and winning-lender confirmation creating `SettlementInstruction`. This is workflow coordination only; it does not transfer assets.
 - Update IDs / completion offsets from JSON Ledger API responses.
 - Screenshot from frontend showing the same lifecycle.
 

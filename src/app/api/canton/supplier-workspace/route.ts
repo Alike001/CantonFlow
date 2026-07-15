@@ -7,6 +7,7 @@ export async function GET() {
   try {
     const contracts = await readRoleContracts(getCantonConfig("supplier"), [
       "InvoiceRequest",
+      "FundingRound",
       "FundingBid",
       "FundingAgreement",
       "SettlementProposal",

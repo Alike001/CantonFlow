@@ -1,11 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { readRoleContracts } from "@/lib/canton/read-models";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const lender = request.nextUrl.searchParams.get("lender") === "lenderB" ? "lenderB" : "lenderA";
+
   try {
-    const contracts = await readRoleContracts(getCantonConfig("lender"), [
+    const contracts = await readRoleContracts(getCantonConfig(lender), [
       "LenderInvite",
       "FundingBid",
       "FundingAgreement",
@@ -13,7 +15,7 @@ export async function GET() {
       "SettlementInstruction",
     ]);
 
-    return NextResponse.json({ contracts });
+    return NextResponse.json({ lender, contracts });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Canton query failed" },

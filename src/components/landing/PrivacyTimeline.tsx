@@ -4,7 +4,7 @@ import { CheckCircle2, EyeOff } from "lucide-react";
 
 const stages = [
   {
-    title: "Invoice Uploaded",
+    title: "Receivables RFQ Submitted",
     visibility: [
       { role: "Supplier", visible: true },
       { role: "Eligible Lenders", visible: false },
@@ -20,7 +20,7 @@ const stages = [
     ],
   },
   {
-    title: "Settlement Completed",
+    title: "Settlement Coordination Confirmed",
     visibility: [
       { role: "Supplier", visible: true },
       { role: "Winning Lender", visible: true },

@@ -21,9 +21,15 @@ const workspaces: Workspace[] = [
     icon: Building2,
   },
   {
-    title: "Lender",
-    description: "Review active LenderInvite contracts and submit confidential financing bids.",
+    title: "Lender A",
+    description: "Review only lender A invitations and submit confidential financing bids.",
     route: "/lender",
+    icon: Landmark,
+  },
+  {
+    title: "Lender B",
+    description: "Review only lender B invitations and prove competing bid confidentiality.",
+    route: "/lender?lender=lenderB",
     icon: Landmark,
   },
   {
@@ -39,7 +45,7 @@ export default function RoleSelect() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-4">
         {workspaces.map((workspace) => {
           const Icon = workspace.icon;
           return (

@@ -6,8 +6,8 @@ export default function UploadInvoicePage() {
   return (
     <DashboardLayout>
       <PageHeader
-        title="Upload Invoice"
-        description="Submit a new invoice for confidential financing on CantonFlow."
+        title="Create Receivables RFQ"
+        description="Create a confidential financing request from receivable data held in your existing system."
       />
 
       <UploadInvoiceForm />

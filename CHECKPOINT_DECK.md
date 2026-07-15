@@ -8,13 +8,13 @@ Encode Club x Canton Foundation Build on Canton Hackathon
 
 ## 2. Problem
 
-SMEs need faster access to working capital, but invoice financing exposes sensitive commercial data: buyers, invoice documents, rates, lender appetite, and supplier cash-flow pressure.
+SMEs need faster access to working capital, but invoice financing exposes sensitive commercial data: buyer identity, rates, lender appetite, and supplier cash-flow pressure.
 
 Traditional public-chain lending flows are not credible for this workflow because institutions cannot expose deal terms to the market.
 
 ## 3. Solution
 
-CantonFlow gives suppliers a professional invoice financing workspace where they can upload unpaid invoices and receive private funding offers from eligible lenders.
+CantonFlow gives suppliers a professional confidential receivables-RFQ workspace where they can submit invoice terms and receive private funding offers from eligible lenders.
 
 The core product thesis is simple: only the parties involved should see the transaction details.
 
@@ -26,15 +26,15 @@ Canton is the right infrastructure because the product depends on:
 - Confidential bidding
 - Permissioned workflows
 - Institutional privacy
-- Atomic settlement
+- Privacy-enabled workflow coordination
 
 The product is designed around those strengths instead of generic crypto wallet behavior.
 
 ## 5. Product Flow
 
 1. Landing page: explain the privacy-first invoice financing use case.
-2. Supplier dashboard: show invoice pipeline, confidential bids, and settlement activity.
-3. Upload invoice: submit a financing request with validation.
+2. Supplier dashboard: show RFQs, confidential bids, and funding coordination.
+3. Create RFQ: submit a financing request with validation.
 4. Marketplace: show private lender offers where competing lenders cannot see each other.
 5. Close: show the Canton Daml lifecycle and DevNet deployment path.
 
@@ -42,15 +42,15 @@ The product is designed around those strengths instead of generic crypto wallet 
 
 - Responsive landing page
 - Supplier dashboard
-- Upload invoice flow with validation, ledger update ID display, and automatic lender invite creation
+- Receivables RFQ flow with validation, ledger update ID display, and two lender-specific invitations
 - Confidential marketplace screen
 - Lender bid submission workflow wired to the Canton JSON API route
 - Supplier bid acceptance workflow wired to the Canton JSON API route for ledger-backed offers
-- Settlement preparation workflow wired to the Canton JSON API route
+- Supplier-proposed and winning-lender-confirmed settlement coordination wired to Canton JSON API routes; no payment rail is claimed
 - Regulator metadata-only view
 - DAML contract model for the workflow lifecycle
 - Local Canton sandbox execution through JSON API routes
-- On-ledger local update IDs captured for invoice request, lender invite, bid, agreement, and settlement
+- Daml tests proving two-lender bid isolation, authorization boundaries, and one accepted agreement per RFQ
 - Dashboard ledger proof panel for judge-visible protocol evidence
 - Canton environment badge showing Local Sandbox or DevNet status
 - Navigation across all live routes

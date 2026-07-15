@@ -64,7 +64,7 @@ export default function Hero() {
           <div className="mt-8 space-y-6">
 
             <WorkflowItem
-              title="Supplier uploads invoice"
+              title="Supplier creates RFQ"
               color="bg-violet-600"
             />
 

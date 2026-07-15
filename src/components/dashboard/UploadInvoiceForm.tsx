@@ -23,7 +23,7 @@ type FormState = {
   currency: string;
   dueDate: string;
   requestedAmount: string;
-  minimumRate: string;
+  maximumRate: string;
 };
 
 type LedgerSubmission = {
@@ -31,10 +31,10 @@ type LedgerSubmission = {
   updateId?: string;
   completionOffset?: string | number;
   createdContractId?: string;
+  fundingRoundContractId?: string;
+  fundingRoundId?: string;
   contractLookupWarning?: string;
-  inviteUpdateId?: string;
-  inviteCompletionOffset?: string | number;
-  lenderInviteContractId?: string;
+  lenderInviteContractIds?: string[];
 };
 
 const initialFormState: FormState = {
@@ -44,7 +44,7 @@ const initialFormState: FormState = {
   currency: "USD",
   dueDate: "2026-08-30",
   requestedAmount: "256000",
-  minimumRate: "4.5",
+  maximumRate: "4.5",
 };
 
 export default function UploadInvoiceForm() {
@@ -118,7 +118,7 @@ export default function UploadInvoiceForm() {
           currency: result.data.currency,
           dueDate: result.data.dueDate,
           requestedAdvance: result.data.requestedAmount.toFixed(1),
-          minimumDiscountRate: result.data.minimumRate.toFixed(1),
+          maximumDiscountRate: result.data.maximumRate.toFixed(1),
           idempotencyKey,
         }),
       });
@@ -131,38 +131,55 @@ export default function UploadInvoiceForm() {
 
       if (!payload.createdContractId) {
         throw new Error(
-          "InvoiceRequest was submitted, but the contract ID lookup did not complete. Query active contracts before inviting lenders.",
+          "Invoice request was submitted, but the contract ID lookup did not complete. Refresh the supplier workspace before opening the RFQ.",
         );
       }
 
-      const inviteResponse = await fetch("/api/canton/invites", {
+      const fundingRoundResponse = await fetch("/api/canton/funding-rounds", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           invoiceRequestContractId: payload.createdContractId,
-          idempotencyKey: `invite-${idempotencyKey}`,
+          idempotencyKey: `open-round-${idempotencyKey}`,
         }),
       });
+      const fundingRoundPayload = await fundingRoundResponse.json();
 
-      const invitePayload = await inviteResponse.json();
-
-      if (!inviteResponse.ok) {
-        throw new Error(invitePayload.error || "Lender invite failed");
+      if (!fundingRoundResponse.ok || !fundingRoundPayload.fundingRoundContractId) {
+        throw new Error(fundingRoundPayload.error || "Funding round contract lookup failed");
       }
 
-      if (!invitePayload.createdContractId) {
-        throw new Error(
-          "LenderInvite was submitted, but the contract ID lookup did not complete. Query active contracts before lender bidding.",
-        );
+      let activeFundingRoundContractId = fundingRoundPayload.fundingRoundContractId as string;
+      const inviteResults: string[] = [];
+
+      for (const lender of ["lenderA", "lenderB"] as const) {
+        const inviteResponse = await fetch("/api/canton/invites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fundingRoundContractId: activeFundingRoundContractId,
+            lender,
+            idempotencyKey: `invite-${lender}-${idempotencyKey}`,
+          }),
+        });
+        const invitePayload = await inviteResponse.json();
+
+        if (
+          !inviteResponse.ok ||
+          !invitePayload.createdContractId ||
+          !invitePayload.fundingRoundContractId
+        ) {
+          throw new Error(invitePayload.error || "Lender invite contract lookup failed");
+        }
+
+        inviteResults.push(invitePayload.createdContractId as string);
+        activeFundingRoundContractId = invitePayload.fundingRoundContractId as string;
       }
 
       setSubmission({
         ...payload,
-        inviteUpdateId: invitePayload.updateId,
-        inviteCompletionOffset: invitePayload.completionOffset,
-        lenderInviteContractId: invitePayload.createdContractId,
+        fundingRoundContractId: activeFundingRoundContractId,
+        lenderInviteContractIds: inviteResults,
       });
       invoiceSubmissionKey.current = null;
     } catch (error) {
@@ -187,8 +204,8 @@ export default function UploadInvoiceForm() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Create a confidential financing request from verified invoice
-                data held in your existing receivables system.
+                Create a confidential receivables RFQ from invoice data held in
+                your existing receivables system.
               </p>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -255,16 +272,16 @@ export default function UploadInvoiceForm() {
                   />
                 </FieldError>
 
-                <FieldError message={errors.minimumRate}>
-                  <Label htmlFor="minimumRate">Maximum Discount Rate (%)</Label>
+                <FieldError message={errors.maximumRate}>
+                  <Label htmlFor="maximumRate">Maximum Discount Rate (%)</Label>
                   <Input
-                    id="minimumRate"
+                    id="maximumRate"
                     type="number"
                     min="1"
                     max="100"
                     step="0.1"
-                    value={form.minimumRate}
-                    onChange={(event) => updateField("minimumRate", event.target.value)}
+                    value={form.maximumRate}
+                    onChange={(event) => updateField("maximumRate", event.target.value)}
                   />
                 </FieldError>
 
@@ -290,11 +307,11 @@ export default function UploadInvoiceForm() {
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="font-medium">
-                    InvoiceRequest created and lender invited on-ledger.
+                    Receivables RFQ and two lender invitations created on-ledger.
                   </p>
                   <p className="mt-1 text-emerald-800">
                     The supplier party created a CantonFlow invoice request and
-                    issued a selective-disclosure invite to the lender.
+                    issued separate selective-disclosure invitations to two lenders.
                   </p>
                   <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                     <div>
@@ -321,28 +338,14 @@ export default function UploadInvoiceForm() {
                         {submission.createdContractId || "Pending"}
                       </dd>
                     </div>
-                    <div>
-                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                        Invite update
-                      </dt>
-                      <dd className="mt-1 break-all font-mono text-emerald-950">
-                        {submission.inviteUpdateId || "Pending"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                        Invite offset
-                      </dt>
-                      <dd className="mt-1 font-mono text-emerald-950">
-                        {submission.inviteCompletionOffset || "Pending"}
-                      </dd>
-                    </div>
                     <div className="sm:col-span-2">
                       <dt className="font-semibold uppercase tracking-wide text-emerald-700">
-                        LenderInvite contract
+                        Private lender invitations
                       </dt>
                       <dd className="mt-1 break-all font-mono text-emerald-950">
-                        {submission.lenderInviteContractId || "Pending"}
+                        {submission.lenderInviteContractIds?.length === 2
+                          ? "Two lender-specific contracts created"
+                          : "Pending"}
                       </dd>
                     </div>
                   </dl>
@@ -369,7 +372,7 @@ export default function UploadInvoiceForm() {
                   Submitting to ledger
                 </>
               ) : (
-                "Submit Invoice"
+                "Create RFQ"
               )}
             </Button>
           </form>
@@ -409,8 +412,8 @@ export default function UploadInvoiceForm() {
                 Hidden until award
               </p>
               <p className="mt-2 text-sm text-slate-700">
-                Buyer legal identity, invoice document, and competing lender
-                bids.
+                Buyer legal identity and competing lender bids. CantonFlow does
+                not collect or verify source documents in this RFQ workflow.
               </p>
             </div>
           </CardContent>

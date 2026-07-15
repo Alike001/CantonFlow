@@ -62,6 +62,10 @@ export default function SupplierMarketplace() {
     () => contracts.filter((contract) => contract.template === "FundingAgreement"),
     [contracts],
   );
+  const fundingRounds = useMemo(
+    () => contracts.filter((contract) => contract.template === "FundingRound"),
+    [contracts],
+  );
 
   async function loadWorkspace() {
     setIsLoading(true);
@@ -103,6 +107,16 @@ export default function SupplierMarketplace() {
     setSubmission(null);
     const idempotencyKey = acceptanceKeys.current.get(bid.contractId) || crypto.randomUUID();
     acceptanceKeys.current.set(bid.contractId, idempotencyKey);
+    const fundingRoundId = stringValue(bid.payload.fundingRoundId);
+    const fundingRound = fundingRounds.find(
+      (round) => stringValue(round.payload.fundingRoundId) === fundingRoundId,
+    );
+
+    if (!fundingRound) {
+      setError("The supplier-owned funding round for this bid is no longer active. Another bid may already have been accepted.");
+      setAcceptingBidId(null);
+      return;
+    }
 
     try {
       const response = await fetch("/api/canton/agreements", {
@@ -110,6 +124,7 @@ export default function SupplierMarketplace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fundingBidContractId: bid.contractId,
+          fundingRoundContractId: fundingRound.contractId,
           acceptedAt: new Date().toISOString(),
           idempotencyKey,
         }),

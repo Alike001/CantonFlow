@@ -46,21 +46,20 @@ template InvoiceRequest
     currency : Currency
     dueDate : Date
     requestedAdvance : Decimal
-    minimumDiscountRate : Decimal
+    maximumDiscountRate : Decimal
   where
+    ensure amount > 0.0 && requestedAdvance > 0.0 && requestedAdvance <= amount && maximumDiscountRate > 0.0 && maximumDiscountRate <= 100.0
     signatory supplier
     observer buyer
 
-    choice InviteLender : ContractId LenderInvite
-      with
-        lender : Party
-        occurredAt : Time
+    choice OpenFundingRound : ContractId FundingRound
       controller supplier
       do
-        lenderInvite <- create LenderInvite with
+        create FundingRound with
           supplier
+          buyer
           regulator
-          lender
+          fundingRoundId = "round-" <> invoiceId
           invoiceId
           invoiceNumber
           buyerProfile
@@ -68,7 +67,52 @@ template InvoiceRequest
           currency
           dueDate
           requestedAdvance
-          minimumDiscountRate
+          maximumDiscountRate
+          invitedLenders = []
+
+template FundingRound
+  with
+    supplier : Party
+    buyer : Party
+    regulator : Party
+    fundingRoundId : Text
+    invoiceId : InvoiceId
+    invoiceNumber : Text
+    buyerProfile : Text
+    amount : Decimal
+    currency : Currency
+    dueDate : Date
+    requestedAdvance : Decimal
+    maximumDiscountRate : Decimal
+    invitedLenders : [Party]
+  where
+    ensure amount > 0.0 && requestedAdvance > 0.0 && requestedAdvance <= amount && maximumDiscountRate > 0.0 && maximumDiscountRate <= 100.0
+    signatory supplier
+    observer buyer
+
+    choice InviteLender : ContractId FundingRound
+      with
+        lender : Party
+        occurredAt : Time
+      controller supplier
+      do
+        assertMsg "Lender has already been invited to this funding round" (not (elem lender invitedLenders))
+        lenderInvite <- create LenderInvite with
+          supplier
+          regulator
+          lender
+          fundingRoundId
+          invoiceId
+          invoiceNumber
+          buyerProfile
+          amount
+          currency
+          dueDate
+          requestedAdvance
+          maximumDiscountRate
+
+        nextFundingRound <- create this with
+          invitedLenders = lender :: invitedLenders
 
         create WorkflowAuditEvent with
           eventOwner = supplier
@@ -79,13 +123,14 @@ template InvoiceRequest
           stage = AuditLenderInvited
           occurredAt
 
-        pure lenderInvite
+        pure nextFundingRound
 
 template LenderInvite
   with
     supplier : Party
     regulator : Party
     lender : Party
+    fundingRoundId : Text
     invoiceId : InvoiceId
     invoiceNumber : Text
     buyerProfile : Text
@@ -93,12 +138,13 @@ template LenderInvite
     currency : Currency
     dueDate : Date
     requestedAdvance : Decimal
-    minimumDiscountRate : Decimal
+    maximumDiscountRate : Decimal
   where
+    ensure amount > 0.0 && requestedAdvance > 0.0 && requestedAdvance <= amount && maximumDiscountRate > 0.0 && maximumDiscountRate <= 100.0
     signatory supplier
     observer lender
 
-    nonconsuming choice SubmitFundingBid : ContractId FundingBid
+    choice SubmitFundingBid : ContractId FundingBid
       with
         advanceAmount : Decimal
         discountRate : Decimal
@@ -109,11 +155,15 @@ template LenderInvite
       do
         assertMsg "Advance amount must be positive" (advanceAmount > 0.0)
         assertMsg "Discount rate must be positive" (discountRate > 0.0)
+        assertMsg "Advance exceeds the requested amount" (advanceAmount <= requestedAdvance)
+        assertMsg "Discount rate exceeds the supplier maximum" (discountRate <= maximumDiscountRate)
+        assertMsg "Settlement period must be positive" (settlementDays > 0)
 
         fundingBid <- create FundingBid with
           supplier
           lender
           regulator
+          fundingRoundId
           invoiceId
           invoiceNumber
           currency
@@ -139,6 +189,7 @@ template FundingBid
     supplier : Party
     lender : Party
     regulator : Party
+    fundingRoundId : Text
     invoiceId : InvoiceId
     invoiceNumber : Text
     currency : Currency
@@ -148,14 +199,25 @@ template FundingBid
     lenderNote : Text
     submittedAt : Time
   where
+    ensure advanceAmount > 0.0 && discountRate > 0.0 && settlementDays > 0
     signatory lender
     observer supplier
 
     choice AcceptBid : ContractId FundingAgreement
       with
+        fundingRoundToClose : ContractId FundingRound
         acceptedAt : Time
       controller supplier
       do
+        round <- fetch fundingRoundToClose
+        assertMsg "Bid does not belong to this funding round" (fundingRoundId == round.fundingRoundId)
+        assertMsg "Funding round belongs to a different supplier" (round.supplier == supplier)
+        assertMsg "Funding round belongs to a different invoice" (round.invoiceId == invoiceId)
+        assertMsg "Advance exceeds the requested amount" (advanceAmount <= round.requestedAdvance)
+        assertMsg "Discount rate exceeds the supplier maximum" (discountRate <= round.maximumDiscountRate)
+        assertMsg "Settlement period must be positive" (settlementDays > 0)
+        archive fundingRoundToClose
+
         fundingAgreement <- create FundingAgreement with
           supplier
           lender
@@ -194,6 +256,7 @@ template FundingAgreement
     acceptedAt : Time
     status : InvoiceStatus
   where
+    ensure advanceAmount > 0.0 && discountRate > 0.0 && settlementDays > 0
     signatory supplier, lender
 
     choice ProposeSettlement : ContractId SettlementProposal
@@ -236,6 +299,7 @@ template SettlementProposal
     settlementReference : Text
     preparedAt : Time
   where
+    ensure advanceAmount > 0.0
     signatory supplier
     observer lender
 
@@ -282,5 +346,6 @@ template SettlementInstruction
     confirmedAt : Time
     settlementStatus : InvoiceStatus
   where
+    ensure advanceAmount > 0.0
     signatory lender
     observer supplier

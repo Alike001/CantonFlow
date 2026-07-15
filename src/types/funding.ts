@@ -5,7 +5,7 @@ export interface FundingRequest {
 
   requestedAmount: number;
 
-  minimumRate: number;
+  maximumRate: number;
 
   biddingEnds: string;
 }

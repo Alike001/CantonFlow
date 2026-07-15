@@ -37,7 +37,7 @@ else
 fi
 
 if [[ "${STARTED_SANDBOX}" == "true" || "${REPROVISION_PARTIES}" == "true" || ! -s "${PARTY_FILE}" ]]; then
-  echo "Provisioning local supplier, buyer, lender, and regulator parties..."
+  echo "Provisioning local supplier, buyer, two lenders, and regulator parties..."
   bash "${ROOT_DIR}/scripts/setup-local-parties.sh"
 else
   echo "Using existing local party configuration at ${PARTY_FILE}."
@@ -67,7 +67,8 @@ const values = {
   CANTONFLOW_SUPPLIER_PARTY: parties.supplier,
   CANTONFLOW_BUYER_PARTY: parties.buyer,
   CANTONFLOW_REGULATOR_PARTY: parties.regulator,
-  CANTONFLOW_LENDER_PARTY: parties.lender,
+  CANTONFLOW_LENDER_A_PARTY: parties.lenderA,
+  CANTONFLOW_LENDER_B_PARTY: parties.lenderB,
 };
 
 const existing = fs.existsSync(envFile) ? fs.readFileSync(envFile, "utf8").split(/\r?\n/) : [];

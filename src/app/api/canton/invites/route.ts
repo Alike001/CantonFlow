@@ -5,7 +5,8 @@ import { getCantonConfig } from "@/lib/canton/config";
 import { inviteLenderOnLedger } from "@/lib/canton/cantonflow-commands";
 
 const inviteSchema = z.object({
-  invoiceRequestContractId: z.string().min(1),
+  fundingRoundContractId: z.string().min(1),
+  lender: z.enum(["lenderA", "lenderB"]),
   idempotencyKey: z.string().min(1).max(160).optional(),
 });
 

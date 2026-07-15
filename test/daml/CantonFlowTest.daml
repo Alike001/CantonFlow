@@ -10,7 +10,8 @@ testReceivablesRfqLifecycle = script do
   supplier <- allocatePartyByHint (PartyIdHint "supplier")
   buyer <- allocatePartyByHint (PartyIdHint "buyer")
   regulator <- allocatePartyByHint (PartyIdHint "regulator")
-  lender <- allocatePartyByHint (PartyIdHint "lender")
+  lenderA <- allocatePartyByHint (PartyIdHint "lender-a")
+  lenderB <- allocatePartyByHint (PartyIdHint "lender-b")
 
   let due = date 2026 Aug 30
   let submitted = time (date 2026 Jul 11) 9 0 0
@@ -31,7 +32,16 @@ testReceivablesRfqLifecycle = script do
       currency = "USD"
       dueDate = due
       requestedAdvance = 252000.0
-      minimumDiscountRate = 4.5
+      maximumDiscountRate = 4.5
+
+  submitMustFail buyer do
+    exerciseCmd invoiceRequest OpenFundingRound
+
+  fundingRound <- submit supplier do
+    exerciseCmd invoiceRequest OpenFundingRound
+
+  submitMustFail supplier do
+    exerciseCmd invoiceRequest OpenFundingRound
 
   submit supplier do
     createCmd WorkflowAuditEvent with
@@ -43,21 +53,76 @@ testReceivablesRfqLifecycle = script do
       stage = AuditInvoiceSubmitted
       occurredAt = submitted
 
-  lenderInvite <- submit supplier do
-    exerciseCmd invoiceRequest InviteLender with
-      lender
+  submitMustFail buyer do
+    exerciseCmd fundingRound InviteLender with
+      lender = lenderA
       occurredAt = invited
 
-  fundingBid <- submit lender do
-    exerciseCmd lenderInvite SubmitFundingBid with
+  fundingRoundAfterA <- submit supplier do
+    exerciseCmd fundingRound InviteLender with
+      lender = lenderA
+      occurredAt = invited
+
+  lenderAInvites <- query @LenderInvite lenderA
+  lenderAInvite <- case lenderAInvites of
+    [(contractId, _)] -> pure contractId
+    _ -> abort "Expected one lender A invitation"
+
+  submitMustFail supplier do
+    exerciseCmd fundingRoundAfterA InviteLender with
+      lender = lenderA
+      occurredAt = invited
+
+  fundingRoundAfterB <- submit supplier do
+    exerciseCmd fundingRoundAfterA InviteLender with
+      lender = lenderB
+      occurredAt = invited
+
+  lenderBInvites <- query @LenderInvite lenderB
+  lenderBInvite <- case lenderBInvites of
+    [(contractId, _)] -> pure contractId
+    _ -> abort "Expected one lender B invitation"
+
+  submitMustFail lenderB do
+    exerciseCmd lenderBInvite SubmitFundingBid with
+      advanceAmount = 252001.0
+      discountRate = 4.7
+      settlementDays = 60
+      lenderNote = "Invalid advance amount."
+      submittedAt = submitted
+
+  lenderABid <- submit lenderA do
+    exerciseCmd lenderAInvite SubmitFundingBid with
       advanceAmount = 252000.0
-      discountRate = 4.9
+      discountRate = 4.4
       settlementDays = 61
       lenderNote = "Can settle quickly after invoice verification."
       submittedAt = submitted
 
+  submitMustFail lenderA do
+    exerciseCmd lenderAInvite SubmitFundingBid with
+      advanceAmount = 252000.0
+      discountRate = 4.4
+      settlementDays = 61
+      lenderNote = "Repeated bid."
+      submittedAt = submitted
+
+  lenderBBid <- submit lenderB do
+    exerciseCmd lenderBInvite SubmitFundingBid with
+      advanceAmount = 248000.0
+      discountRate = 4.2
+      settlementDays = 60
+      lenderNote = "Competing lender bid."
+      submittedAt = submitted
+
   fundingAgreement <- submit supplier do
-    exerciseCmd fundingBid AcceptBid with
+    exerciseCmd lenderABid AcceptBid with
+      fundingRoundToClose = fundingRoundAfterB
+      acceptedAt = accepted
+
+  submitMustFail supplier do
+    exerciseCmd lenderBBid AcceptBid with
+      fundingRoundToClose = fundingRoundAfterB
       acceptedAt = accepted
 
   settlementProposal <- submit supplier do
@@ -65,7 +130,11 @@ testReceivablesRfqLifecycle = script do
       settlementReference = "cantonflow-settlement-001"
       preparedAt = prepared
 
-  settlementInstruction <- submit lender do
+  submitMustFail lenderB do
+    exerciseCmd settlementProposal ConfirmSettlement with
+      confirmedAt = confirmed
+
+  settlementInstruction <- submit lenderA do
     exerciseCmd settlementProposal ConfirmSettlement with
       confirmedAt = confirmed
 
@@ -74,9 +143,13 @@ testReceivablesRfqLifecycle = script do
   regulatorSettlementProposals <- query @SettlementProposal regulator
   regulatorSettlements <- query @SettlementInstruction regulator
   regulatorAuditEvents <- query @WorkflowAuditEvent regulator
+  lenderABids <- query @FundingBid lenderA
+  lenderBBids <- query @FundingBid lenderB
 
   assert (null regulatorBids)
   assert (null regulatorAgreements)
   assert (null regulatorSettlementProposals)
   assert (null regulatorSettlements)
-  assert (length regulatorAuditEvents == 6)
+  assert (length regulatorAuditEvents == 8)
+  assert (length lenderABids == 0)
+  assert (length lenderBBids == 1)

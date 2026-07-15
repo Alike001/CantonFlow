@@ -13,7 +13,7 @@ export const invoiceSchema = z.object({
 
   requestedAmount: z.coerce.number().positive("Requested financing must be greater than zero"),
 
-  minimumRate: z.coerce.number().min(1, "Rate must be at least 1%").max(100, "Rate must be below 100%"),
+  maximumRate: z.coerce.number().min(1, "Rate must be at least 1%").max(100, "Rate must be below 100%"),
 }).refine((invoice) => invoice.requestedAmount <= invoice.amount, {
   path: ["requestedAmount"],
   message: "Requested financing cannot exceed invoice amount",

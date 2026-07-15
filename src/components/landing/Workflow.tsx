@@ -10,9 +10,9 @@ import {
 const steps = [
   {
     icon: FileText,
-    title: "Upload Invoice",
+    title: "Create Receivables RFQ",
     description:
-      "Suppliers securely upload invoices and request financing.",
+      "Suppliers create a confidential request from receivable data and invite lenders.",
   },
   {
     icon: HandCoins,

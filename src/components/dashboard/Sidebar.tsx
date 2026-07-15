@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Upload,
+  FilePlus2,
   HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,9 +16,9 @@ const links = [
     icon: LayoutDashboard,
   },
   {
-    title: "Upload",
+    title: "Create RFQ",
     href: "/supplier/upload",
-    icon: Upload,
+    icon: FilePlus2,
   },
   {
     title: "Marketplace",

@@ -8,11 +8,12 @@ export interface CantonConfig {
     supplier: string;
     buyer: string;
     regulator: string;
-    lender: string;
+    lenderA: string;
+    lenderB: string;
   };
 }
 
-type CantonRole = "supplier" | "buyer" | "regulator" | "lender";
+export type CantonRole = "supplier" | "buyer" | "regulator" | "lenderA" | "lenderB";
 
 const REQUIRED_ENV = [
   "JSON_LEDGER_API_URL",
@@ -20,7 +21,8 @@ const REQUIRED_ENV = [
   "CANTONFLOW_SUPPLIER_PARTY",
   "CANTONFLOW_BUYER_PARTY",
   "CANTONFLOW_REGULATOR_PARTY",
-  "CANTONFLOW_LENDER_PARTY",
+  "CANTONFLOW_LENDER_A_PARTY",
+  "CANTONFLOW_LENDER_B_PARTY",
 ] as const;
 
 export function getMissingCantonEnv() {
@@ -37,7 +39,13 @@ export function getMissingCantonEnv() {
 }
 
 function getUserId(role: CantonRole) {
-  const roleKey = `CANTONFLOW_${role.toUpperCase()}_USER_ID`;
+  const roleKey = {
+    supplier: "CANTONFLOW_SUPPLIER_USER_ID",
+    buyer: "CANTONFLOW_BUYER_USER_ID",
+    regulator: "CANTONFLOW_REGULATOR_USER_ID",
+    lenderA: "CANTONFLOW_LENDER_A_USER_ID",
+    lenderB: "CANTONFLOW_LENDER_B_USER_ID",
+  }[role];
   return process.env[roleKey] || process.env.CANTONFLOW_USER_ID || role;
 }
 
@@ -58,7 +66,8 @@ export function getCantonConfig(role: CantonRole = "supplier"): CantonConfig {
       supplier: process.env.CANTONFLOW_SUPPLIER_PARTY!,
       buyer: process.env.CANTONFLOW_BUYER_PARTY!,
       regulator: process.env.CANTONFLOW_REGULATOR_PARTY!,
-      lender: process.env.CANTONFLOW_LENDER_PARTY!,
+      lenderA: process.env.CANTONFLOW_LENDER_A_PARTY!,
+      lenderB: process.env.CANTONFLOW_LENDER_B_PARTY!,
     },
   };
 }

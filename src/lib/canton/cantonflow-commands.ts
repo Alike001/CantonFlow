@@ -15,7 +15,7 @@ export interface CreateInvoiceRequestInput {
   currency: string;
   dueDate: string;
   requestedAdvance: string;
-  minimumDiscountRate: string;
+  maximumDiscountRate: string;
   idempotencyKey?: string;
 }
 
@@ -34,7 +34,7 @@ export function createInvoiceRequestArguments(
     currency: input.currency,
     dueDate: input.dueDate,
     requestedAdvance: input.requestedAdvance,
-    minimumDiscountRate: input.minimumDiscountRate,
+    maximumDiscountRate: input.maximumDiscountRate,
   };
 }
 
@@ -86,20 +86,65 @@ export async function createInvoiceRequestOnLedger(
   }
 }
 
-export async function inviteLenderOnLedger(
+export async function openFundingRoundOnLedger(
   config: CantonConfig,
   input: { invoiceRequestContractId: string; idempotencyKey?: string },
 ) {
   const result = await submitAndWait(config, {
-    workflowId: "cantonflow-invite-lender",
-    commandId: `cantonflow-invite-lender-${input.idempotencyKey || input.invoiceRequestContractId}`,
+    workflowId: "cantonflow-open-funding-round",
+    commandId: `cantonflow-open-funding-round-${input.idempotencyKey || input.invoiceRequestContractId}`,
     actAs: [config.parties.supplier],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "InvoiceRequest"),
         input.invoiceRequestContractId,
+        "OpenFundingRound",
+        {},
+      ),
+    ],
+  });
+
+  try {
+    const contracts = await queryActiveContracts(config, result.completionOffset);
+    return {
+      ...result,
+      fundingRoundContractId: findCreatedContractIdAtOffset(
+        contracts,
+        cantonTemplateId(config, "FundingRound"),
+        result.completionOffset,
+      ),
+    };
+  } catch (error) {
+    return {
+      ...result,
+      fundingRoundContractId: undefined,
+      contractLookupWarning:
+        error instanceof Error ? error.message : "FundingRound contract lookup failed",
+    };
+  }
+}
+
+export async function inviteLenderOnLedger(
+  config: CantonConfig,
+  input: {
+    fundingRoundContractId: string;
+    lender: "lenderA" | "lenderB";
+    idempotencyKey?: string;
+  },
+) {
+  const result = await submitAndWait(config, {
+    workflowId: "cantonflow-invite-lender",
+    commandId: `cantonflow-invite-lender-${input.idempotencyKey || input.fundingRoundContractId}`,
+    actAs: [config.parties.supplier],
+    commands: [
+      buildExerciseCommand(
+        cantonTemplateId(config, "FundingRound"),
+        input.fundingRoundContractId,
         "InviteLender",
-        { lender: config.parties.lender, occurredAt: new Date().toISOString() },
+        {
+          lender: config.parties[input.lender],
+          occurredAt: new Date().toISOString(),
+        },
       ),
     ],
   });
@@ -116,11 +161,17 @@ export async function inviteLenderOnLedger(
     return {
       ...result,
       createdContractId,
+      fundingRoundContractId: findCreatedContractIdAtOffset(
+        contracts,
+        cantonTemplateId(config, "FundingRound"),
+        result.completionOffset,
+      ),
     };
   } catch (error) {
     return {
       ...result,
       createdContractId: undefined,
+      fundingRoundContractId: undefined,
       contractLookupWarning:
         error instanceof Error ? error.message : "LenderInvite contract lookup failed",
     };
@@ -136,13 +187,14 @@ export async function submitFundingBidOnLedger(
     settlementDays: string | number;
     lenderNote: string;
     submittedAt: string;
+    lender: "lenderA" | "lenderB";
     idempotencyKey?: string;
   },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-submit-funding-bid",
     commandId: `cantonflow-submit-funding-bid-${input.idempotencyKey || input.lenderInviteContractId}`,
-    actAs: [config.parties.lender],
+    actAs: [config.parties[input.lender]],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "LenderInvite"),
@@ -184,7 +236,12 @@ export async function submitFundingBidOnLedger(
 
 export async function acceptFundingBidOnLedger(
   config: CantonConfig,
-  input: { fundingBidContractId: string; acceptedAt: string; idempotencyKey?: string },
+  input: {
+    fundingBidContractId: string;
+    fundingRoundContractId: string;
+    acceptedAt: string;
+    idempotencyKey?: string;
+  },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-accept-funding-bid",
@@ -195,7 +252,10 @@ export async function acceptFundingBidOnLedger(
         cantonTemplateId(config, "FundingBid"),
         input.fundingBidContractId,
         "AcceptBid",
-        { acceptedAt: input.acceptedAt },
+        {
+          fundingRoundToClose: input.fundingRoundContractId,
+          acceptedAt: input.acceptedAt,
+        },
       ),
     ],
   });
@@ -277,13 +337,14 @@ export async function confirmSettlementOnLedger(
   input: {
     settlementProposalContractId: string;
     confirmedAt: string;
+    lender: "lenderA" | "lenderB";
     idempotencyKey?: string;
   },
 ) {
   const result = await submitAndWait(config, {
     workflowId: "cantonflow-confirm-settlement",
     commandId: `cantonflow-confirm-settlement-${input.idempotencyKey || input.settlementProposalContractId}`,
-    actAs: [config.parties.lender],
+    actAs: [config.parties[input.lender]],
     commands: [
       buildExerciseCommand(
         cantonTemplateId(config, "SettlementProposal"),
