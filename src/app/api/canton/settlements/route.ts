@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { proposeSettlementOnLedger } from "@/lib/canton/cantonflow-commands";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 const settlementSchema = z.object({
   fundingAgreementContractId: z.string().min(1),
@@ -12,6 +13,9 @@ const settlementSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authorization = await authorizeCantonRole(["supplier"]);
+  if ("response" in authorization) return authorization.response;
+
   const parsed = settlementSchema.safeParse(await request.json());
 
   if (!parsed.success) {

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { inviteLenderOnLedger } from "@/lib/canton/cantonflow-commands";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 const inviteSchema = z.object({
   fundingRoundContractId: z.string().min(1),
@@ -11,6 +12,9 @@ const inviteSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authorization = await authorizeCantonRole(["supplier"]);
+  if ("response" in authorization) return authorization.response;
+
   const parsed = inviteSchema.safeParse(await request.json());
 
   if (!parsed.success) {

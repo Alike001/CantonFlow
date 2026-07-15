@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { submitFundingBidOnLedger } from "@/lib/canton/cantonflow-commands";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 const bidSchema = z.object({
   lenderInviteContractId: z.string().min(1),
@@ -25,8 +26,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const authorization = await authorizeCantonRole(["lenderA", "lenderB"], parsed.data.lender);
+  if ("response" in authorization) return authorization.response;
+
   try {
-    const result = await submitFundingBidOnLedger(getCantonConfig(parsed.data.lender), parsed.data);
+    const lender = authorization.role as "lenderA" | "lenderB";
+    const result = await submitFundingBidOnLedger(getCantonConfig(lender), {
+      ...parsed.data,
+      lender,
+    });
     return NextResponse.json({ status: "submitted", ...result });
   } catch (error) {
     return NextResponse.json(

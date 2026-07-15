@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
   getMissingCantonEnv: vi.fn(() => []),
   getLedgerEnd: vi.fn(),
   readRoleContracts: vi.fn(),
+  authorizeCantonRole: vi.fn(async (allowed: string[], localRole?: string) => ({
+    role: localRole || allowed[0],
+  })),
 }));
 
 vi.mock("@/lib/canton/config", () => ({
@@ -19,6 +22,10 @@ vi.mock("@/lib/canton/json-ledger-api", () => ({
 
 vi.mock("@/lib/canton/read-models", () => ({
   readRoleContracts: mocks.readRoleContracts,
+}));
+
+vi.mock("@/lib/auth/session", () => ({
+  authorizeCantonRole: mocks.authorizeCantonRole,
 }));
 
 const { POST: postInvite } = await import("../../src/app/api/canton/invites/route");
@@ -95,6 +102,39 @@ describe("Canton API validation", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
       error: "Invalid bid payload",
+    });
+  });
+
+  it("uses the authorized lender party instead of the lender role supplied by the client", async () => {
+    mocks.authorizeCantonRole.mockResolvedValueOnce({ role: "lenderA" });
+    const response = await postBid(
+      jsonRequest({
+        lenderInviteContractId: "invite-1",
+        advanceAmount: "252000.0",
+        discountRate: "4.4",
+        settlementDays: 61,
+        lenderNote: "Test bid",
+        submittedAt: "2026-07-15T12:00:00.000Z",
+        lender: "lenderB",
+      }),
+    );
+
+    expect(mocks.getCantonConfig).toHaveBeenCalledWith("lenderA");
+    expect(response.status).toBe(502);
+  });
+
+  it("returns the authorization response before a supplier write", async () => {
+    const denied = new Response(JSON.stringify({ error: "Authentication is required" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+    mocks.authorizeCantonRole.mockResolvedValueOnce({ response: denied });
+
+    const response = await postFundingRound(jsonRequest({ invoiceRequestContractId: "invoice-1" }));
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Authentication is required",
     });
   });
 });

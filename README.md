@@ -74,6 +74,24 @@ If a restarted local sandbox reports `UNKNOWN_SUBMITTERS`, stop Next.js and repr
 LOCAL_REPROVISION_PARTIES=true npm run local:up
 ```
 
+The local environment enables role selection only for the sandbox. It provisions distinct lender A and lender B parties; do not replace them with one shared lender party because that removes the privacy boundary being tested.
+
+## Production Authentication
+
+Production uses OIDC through Auth.js. It does not accept a lender role from a query parameter or API body: the verified OIDC subject is mapped server-side to exactly one CantonFlow role, which then selects the corresponding Canton party.
+
+Set these Vercel environment variables before enabling the live product:
+
+```text
+AUTH_SECRET=<long random secret>
+CANTONFLOW_OIDC_ISSUER=https://identity.example.com/realms/cantonflow
+CANTONFLOW_OIDC_CLIENT_ID=cantonflow-web
+CANTONFLOW_OIDC_CLIENT_SECRET=<oidc-client-secret>
+CANTONFLOW_OIDC_SUBJECT_ROLES={"oidc-subject-for-supplier":"supplier","oidc-subject-for-lender-a":"lenderA","oidc-subject-for-lender-b":"lenderB","oidc-subject-for-regulator":"regulator"}
+```
+
+Without these values, production workspace and write routes fail closed. The local role selector is never enabled in production.
+
 ## Verification
 
 ```bash

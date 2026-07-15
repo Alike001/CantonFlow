@@ -3,8 +3,12 @@ import { Landmark } from "lucide-react";
 
 import RoleSelect from "@/components/auth/RoleSelect";
 import { APP } from "@/lib/constants";
+import { isLocalRoleSelectionEnabled, isOidcConfigured } from "@/lib/auth/roles";
 
 export default function SignInPage() {
+  const localRoleSelectionEnabled = isLocalRoleSelectionEnabled();
+  const oidcConfigured = isOidcConfigured();
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
@@ -34,13 +38,28 @@ export default function SignInPage() {
             </h1>
 
             <p className="mt-5 text-base leading-7 text-slate-600">
-              Each workspace loads contracts visible to its configured Canton
-              party. Local development uses the supplied sandbox identities.
+              Each workspace loads contracts visible to its authorized Canton
+              party.
             </p>
           </div>
 
           <div className="mt-10">
-            <RoleSelect />
+            {localRoleSelectionEnabled ? <RoleSelect /> : null}
+
+            {!localRoleSelectionEnabled && oidcConfigured ? (
+              <Link
+                href="/api/auth/signin/canton-oidc?callbackUrl=/supplier"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Continue with Institutional SSO
+              </Link>
+            ) : null}
+
+            {!localRoleSelectionEnabled && !oidcConfigured ? (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                Institutional SSO has not been configured for this deployment.
+              </p>
+            ) : null}
           </div>
         </section>
       </div>

@@ -1,4 +1,5 @@
 import LenderBidWorkspace from "@/components/lender/LenderBidWorkspace";
+import { requireWorkspaceRole } from "@/lib/auth/session";
 
 export default async function LenderPage({
   searchParams,
@@ -6,5 +7,9 @@ export default async function LenderPage({
   searchParams: Promise<{ lender?: string }>;
 }) {
   const { lender } = await searchParams;
-  return <LenderBidWorkspace lender={lender === "lenderB" ? "lenderB" : "lenderA"} />;
+  const role = await requireWorkspaceRole(
+    ["lenderA", "lenderB"],
+    lender === "lenderB" ? "lenderB" : "lenderA",
+  );
+  return <LenderBidWorkspace lender={role as "lenderA" | "lenderB"} />;
 }

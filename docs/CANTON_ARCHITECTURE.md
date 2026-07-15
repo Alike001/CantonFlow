@@ -51,6 +51,12 @@ This gives the regulator a real Canton ledger view while preserving commercial c
 
 The browser does not store workflow contracts, bid terms, audit evidence, or contract IDs. Each workspace queries the configured party’s active Canton contracts through server-side JSON Ledger API routes.
 
+## Application Authorization
+
+For production, Auth.js authenticates users through a configured OIDC provider. The server maps the verified OIDC subject to one allowlisted CantonFlow role and derives the Canton party from that role. Supplier-only and regulator-only routes reject other roles; lender routes ignore a client-supplied lender selector in production and use the authenticated lender role instead.
+
+The role selector is limited to the local sandbox through `CANTONFLOW_ALLOW_LOCAL_ROLE_SELECTION=true`. It exists only to exercise separately provisioned local parties and is disabled when `NODE_ENV=production`.
+
 ## Verification
 
 ```bash

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { createInvoiceRequestOnLedger } from "@/lib/canton/cantonflow-commands";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 const invoiceRequestSchema = z.object({
   invoiceId: z.string().min(1),
@@ -17,6 +18,9 @@ const invoiceRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authorization = await authorizeCantonRole(["supplier"]);
+  if ("response" in authorization) return authorization.response;
+
   const body = await request.json();
   const parsed = invoiceRequestSchema.safeParse(body);
 

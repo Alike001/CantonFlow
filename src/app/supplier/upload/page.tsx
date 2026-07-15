@@ -1,8 +1,11 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import PageHeader from "@/components/dashboard/PageHeader";
 import UploadInvoiceForm from "@/components/dashboard/UploadInvoiceForm";
+import { requireWorkspaceRole } from "@/lib/auth/session";
 
-export default function UploadInvoicePage() {
+export default async function UploadInvoicePage() {
+  await requireWorkspaceRole(["supplier"]);
+
   return (
     <DashboardLayout>
       <PageHeader

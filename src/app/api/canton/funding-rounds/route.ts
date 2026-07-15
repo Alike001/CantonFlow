@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { openFundingRoundOnLedger } from "@/lib/canton/cantonflow-commands";
 import { getCantonConfig } from "@/lib/canton/config";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 const fundingRoundSchema = z.object({
   invoiceRequestContractId: z.string().min(1),
@@ -10,6 +11,9 @@ const fundingRoundSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authorization = await authorizeCantonRole(["supplier"]);
+  if ("response" in authorization) return authorization.response;
+
   const parsed = fundingRoundSchema.safeParse(await request.json());
 
   if (!parsed.success) {

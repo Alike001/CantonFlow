@@ -11,6 +11,12 @@ data CantonFlowParties = CantonFlowParties
     lenderB : Party
   deriving (Eq, Show)
 
+data CantonFlowLenders = CantonFlowLenders
+  with
+    lenderA : Party
+    lenderB : Party
+  deriving (Eq, Show)
+
 setupParties : Script CantonFlowParties
 setupParties = script do
   supplier <- createParty "supplier"
@@ -23,6 +29,18 @@ setupParties = script do
     supplier
     buyer
     regulator
+    lenderA
+    lenderB
+
+-- Migration helper for sandboxes created before CantonFlow supported two
+-- lender parties. It deliberately leaves existing supplier, buyer, and
+-- regulator parties untouched.
+setupLenders : Script CantonFlowLenders
+setupLenders = script do
+  lenderA <- createParty "lender-a"
+  lenderB <- createParty "lender-b"
+
+  pure CantonFlowLenders with
     lenderA
     lenderB
 

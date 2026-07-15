@@ -62,6 +62,7 @@ const parties = JSON.parse(fs.readFileSync(partyFile, "utf8"));
 const values = {
   JSON_LEDGER_API_URL: "http://localhost:7575",
   CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API: "true",
+  CANTONFLOW_ALLOW_LOCAL_ROLE_SELECTION: "true",
   CANTONFLOW_APPLICATION_ID: "cantonflow",
   CANTONFLOW_PACKAGE_ID: packageId,
   CANTONFLOW_SUPPLIER_PARTY: parties.supplier,

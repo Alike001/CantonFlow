@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getCantonConfig } from "@/lib/canton/config";
 import { readRoleContracts } from "@/lib/canton/read-models";
+import { authorizeCantonRole } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
-  const lender = request.nextUrl.searchParams.get("lender") === "lenderB" ? "lenderB" : "lenderA";
+  const localLender = request.nextUrl.searchParams.get("lender") === "lenderB" ? "lenderB" : "lenderA";
+  const authorization = await authorizeCantonRole(["lenderA", "lenderB"], localLender);
+  if ("response" in authorization) return authorization.response;
+  const lender = authorization.role as "lenderA" | "lenderB";
 
   try {
     const contracts = await readRoleContracts(getCantonConfig(lender), [

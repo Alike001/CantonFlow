@@ -2,8 +2,11 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import PageHeader from "@/components/dashboard/PageHeader";
 import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
 import SupplierLedgerOverview from "@/components/dashboard/SupplierLedgerOverview";
+import { requireWorkspaceRole } from "@/lib/auth/session";
 
-export default function SupplierPage() {
+export default async function SupplierPage() {
+  await requireWorkspaceRole(["supplier"]);
+
   return (
   <DashboardLayout>
     <div className="space-y-6">
