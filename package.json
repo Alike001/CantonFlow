@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:api": "vitest run --project api",
     "test:daml": "bash scripts/test-daml.sh",
-    "local:up": "bash scripts/start-local-stack.sh"
+    "local:up": "bash scripts/start-local-stack.sh",
+    "devnet:token": "bash scripts/refresh-devnet-token.sh",
+    "devnet:parties": "bash scripts/allocate-devnet-parties.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
