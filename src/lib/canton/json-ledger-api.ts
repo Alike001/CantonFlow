@@ -1,4 +1,5 @@
 import type { CantonConfig } from "./config";
+import { getLedgerApiToken } from "./ledger-token";
 
 type JsonObject = Record<string, unknown>;
 
@@ -121,9 +122,7 @@ export async function submitAndWait(
     "Content-Type": "application/json",
   };
 
-  if (config.ledgerApiToken) {
-    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
-  }
+  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/commands/submit-and-wait`,
@@ -186,9 +185,7 @@ export async function queryActiveContracts(
     "Content-Type": "application/json",
   };
 
-  if (config.ledgerApiToken) {
-    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
-  }
+  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/active-contracts`,
@@ -211,9 +208,7 @@ export async function queryActiveContracts(
 export async function getLedgerEnd(config: CantonConfig): Promise<number | string> {
   const headers: Record<string, string> = {};
 
-  if (config.ledgerApiToken) {
-    headers.Authorization = `Bearer ${config.ledgerApiToken}`;
-  }
+  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/ledger-end`,

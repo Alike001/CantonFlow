@@ -168,6 +168,12 @@ npm run devnet:lifecycle
 
 The rights endpoint requires `ParticipantAdmin` or identity-provider-admin authorization. The current shared-validator M2M credential exposes this right; verify it with `GET /v2/users/{user-id}/rights` before granting access.
 
+## Vercel Server Configuration
+
+Vercel environment variables are encrypted server-side, so configure the M2M values there rather than a short-lived `LEDGER_API_TOKEN`. CantonFlow exchanges and caches the access token only within server-side route execution. Do not prefix any Ledger or M2M variable with `NEXT_PUBLIC_`.
+
+Set the role-specific Ledger API user IDs to the `id` from `GET /v2/authenticated-user`; for the current shared-validator credential this is the same service user for each role, authorized with `CanActAs` for the five distinct parties. The application still derives its requested role from the authenticated CantonFlow user session.
+
 ## App JSON API Integration
 
 The Next.js app includes server-side Canton routes. They do not use browser tokens.

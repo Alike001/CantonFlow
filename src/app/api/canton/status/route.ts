@@ -35,7 +35,7 @@ export async function GET() {
       missing,
       required: [
         "JSON_LEDGER_API_URL",
-        "LEDGER_API_TOKEN",
+        "LEDGER_API_TOKEN or DEVNET_M2M_*",
         "CANTONFLOW_PACKAGE_ID",
         "CANTONFLOW_SUPPLIER_PARTY",
         "CANTONFLOW_BUYER_PARTY",

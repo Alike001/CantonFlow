@@ -80,7 +80,7 @@ The local environment enables role selection only for the sandbox. It provisions
 
 Production uses OIDC through Auth.js. It does not accept a lender role from a query parameter or API body: the verified OIDC subject is mapped server-side to exactly one CantonFlow role, which then selects the corresponding Canton party.
 
-Set these Vercel environment variables before enabling the live product:
+Set these Vercel environment variables before enabling the live product. All are server-side values: do not use the `NEXT_PUBLIC_` prefix.
 
 ```text
 AUTH_SECRET=<long random secret>
@@ -91,6 +91,35 @@ CANTONFLOW_OIDC_SUBJECT_ROLES={"oidc-subject-for-supplier":"supplier","oidc-subj
 ```
 
 Without these values, production workspace and write routes fail closed. The local role selector is never enabled in production.
+
+## Vercel DevNet Configuration
+
+The Ledger API credential is separate from user authentication. Configure the following in Vercel for Production and Preview, using the exact DevNet Party IDs allocated for CantonFlow:
+
+```text
+JSON_LEDGER_API_URL=https://ledger-api.validator.devnet.sandbox.fivenorth.io
+CANTONFLOW_PACKAGE_ID=8e13ff7aa3f44145da0bbcfc560667b0d014db8d751651085367d5945996c42b
+CANTONFLOW_PACKAGE_NAME=cantonflow
+CANTONFLOW_APPLICATION_ID=cantonflow
+CANTONFLOW_USER_ID=<Ledger API authenticated user ID>
+CANTONFLOW_SUPPLIER_USER_ID=<same Ledger API user ID>
+CANTONFLOW_BUYER_USER_ID=<same Ledger API user ID>
+CANTONFLOW_REGULATOR_USER_ID=<same Ledger API user ID>
+CANTONFLOW_LENDER_A_USER_ID=<same Ledger API user ID>
+CANTONFLOW_LENDER_B_USER_ID=<same Ledger API user ID>
+CANTONFLOW_SUPPLIER_PARTY=<supplier Party ID>
+CANTONFLOW_BUYER_PARTY=<buyer Party ID>
+CANTONFLOW_REGULATOR_PARTY=<regulator Party ID>
+CANTONFLOW_LENDER_A_PARTY=<lender A Party ID>
+CANTONFLOW_LENDER_B_PARTY=<lender B Party ID>
+DEVNET_OIDC_TOKEN_URL=<validator M2M token endpoint>
+DEVNET_M2M_CLIENT_ID=<validator M2M client ID>
+DEVNET_M2M_CLIENT_SECRET=<validator M2M client secret>
+DEVNET_M2M_AUDIENCE=<validator M2M audience>
+DEVNET_M2M_SCOPE=daml_ledger_api
+```
+
+The server exchanges the M2M credential for a Ledger token and refreshes it before expiry. Do not set `LEDGER_API_TOKEN` in Vercel when M2M values are configured, and never expose any of these credentials to browser code.
 
 ## Verification
 

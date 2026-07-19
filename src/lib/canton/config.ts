@@ -29,11 +29,8 @@ const REQUIRED_ENV = [
 export function getMissingCantonEnv() {
   const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
 
-  if (
-    !process.env.LEDGER_API_TOKEN &&
-    process.env.CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API !== "true"
-  ) {
-    missing.push("LEDGER_API_TOKEN" as (typeof REQUIRED_ENV)[number]);
+  if (!hasLedgerApiAuthentication() && process.env.CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API !== "true") {
+    missing.push("LEDGER_API_TOKEN or DEVNET_M2M_*" as (typeof REQUIRED_ENV)[number]);
   }
 
   return missing;
@@ -87,3 +84,4 @@ export function cantonQueryTemplateId(
 ) {
   return `#${config.packageName || "cantonflow"}:CantonFlow:${template}`;
 }
+import { hasLedgerApiAuthentication } from "./ledger-token";
