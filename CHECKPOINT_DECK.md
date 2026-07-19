@@ -1,78 +1,80 @@
-# CantonFlow Checkpoint Deck
+# CantonFlow Final Submission Deck
 
-## 1. Title
+## 1. CantonFlow
 
-CantonFlow: Confidential Invoice Financing for Institutional Trade Finance
+**Confidential receivables RFQs for institutional trade finance**
 
 Encode Club x Canton Foundation Build on Canton Hackathon
 
-## 2. Problem
+Suppliers request working capital. Eligible lenders compete privately. CantonFlow coordinates the financing workflow without exposing commercial terms to every market participant.
 
-SMEs need faster access to working capital, but invoice financing exposes sensitive commercial data: buyer identity, rates, lender appetite, and supplier cash-flow pressure.
+## 2. The Problem
 
-Traditional public-chain lending flows are not credible for this workflow because institutions cannot expose deal terms to the market.
+Invoice financing is commercially sensitive. A supplier does not want every lender to see its buyer, cash-flow pressure, requested advance, or acceptable discount rate. Lenders do not want competing lenders to see their pricing or appetite.
 
-## 3. Solution
+Public-by-default finance infrastructure makes this workflow difficult to adopt. Institutions need a shared process with deliberately restricted visibility.
 
-CantonFlow gives suppliers a professional confidential receivables-RFQ workspace where they can submit invoice terms and receive private funding offers from eligible lenders.
+## 3. The Product
 
-The core product thesis is simple: only the parties involved should see the transaction details.
+CantonFlow is a professional receivables-RFQ workspace:
+
+1. A supplier opens a financing RFQ.
+2. The supplier privately invites eligible lenders.
+3. Each lender submits a confidential funding bid.
+4. The supplier selects one bid and creates a shared funding agreement.
+5. Supplier and winning lender coordinate a settlement instruction.
+
+This is not a wallet or token dashboard. It is an operational trade-finance workflow.
 
 ## 4. Why Canton
 
-Canton is the right infrastructure because the product depends on:
+The confidentiality model is implemented in Daml contract stakeholders:
 
-- Selective disclosure
-- Confidential bidding
-- Permissioned workflows
-- Institutional privacy
-- Privacy-enabled workflow coordination
+- `FundingBid` is visible to the bidding lender and supplier.
+- Competing lenders are not stakeholders in each other’s bids.
+- The regulator receives a separate metadata-only `WorkflowAuditEvent`, not financing terms.
+- A supplier accepts a bid by consuming the funding round, preventing another acceptance from that same round.
 
-The product is designed around those strengths instead of generic crypto wallet behavior.
+Canton is essential here because the product requires shared workflow state and selective disclosure at the contract level.
 
-## 5. Product Flow
+## 5. Live DevNet Proof
 
-1. Landing page: explain the privacy-first invoice financing use case.
-2. Supplier dashboard: show RFQs, confidential bids, and funding coordination.
-3. Create RFQ: submit a financing request with validation.
-4. Marketplace: show private lender offers where competing lenders cannot see each other.
-5. Close: show the Canton Daml lifecycle and DevNet deployment path.
+CantonFlow is deployed to the Encode Hackathon Seaport `5N Sandbox` Canton DevNet validator.
 
-## 6. What Works Today
+- DAR package: `8e13ff7aa3f44145da0bbcfc560667b0d014db8d751651085367d5945996c42b`
+- Real workflow: RFQ, two lender invitations, two bids, funding agreement, settlement instruction
+- `FundingAgreement` update: `12209450d8d77d78e51f9d28575bc34dc7e412c6aa5431d15dd5286c3b5d914d2be1`
+- `SettlementInstruction` update: `1220be6eb562d49e6dac1c8d8d5e33c4a5a5711c42baba869f44c5d4e7c6839ff188`
+- Final completion offset: `4454900`
 
-- Responsive landing page
-- Supplier dashboard
-- Receivables RFQ flow with validation, ledger update ID display, and two lender-specific invitations
-- Confidential marketplace screen
-- Lender bid submission workflow wired to the Canton JSON API route
-- Supplier bid acceptance workflow wired to the Canton JSON API route for ledger-backed offers
-- Supplier-proposed and winning-lender-confirmed settlement coordination wired to Canton JSON API routes; no payment rail is claimed
-- Regulator metadata-only view
-- DAML contract model for the workflow lifecycle
-- Local Canton sandbox execution through JSON API routes
-- Daml tests proving two-lender bid isolation, authorization boundaries, and one accepted agreement per RFQ
-- Dashboard ledger proof panel for judge-visible protocol evidence
-- Canton environment badge showing Local Sandbox or DevNet status
-- Navigation across all live routes
-- Production build passes
+The settlement instruction coordinates the next step; CantonFlow does not claim to transfer money or settle an asset today.
+
+## 6. Product Demo
+
+Show the workflow in this order:
+
+1. Landing page: confidential invoice-financing RFQs, not generic DeFi.
+2. Supplier workspace: open a receivables RFQ and invite lenders.
+3. Lender workspace: submit a funding bid.
+4. Supplier marketplace: review and accept a private bid.
+5. Regulator workspace: show lifecycle metadata only.
+6. DevNet evidence: deployed DAR plus update IDs and on-ledger lifecycle output.
+
+The demo proves what the UI cannot merely claim: Daml contracts ran on Canton DevNet with distinct supplier, buyer, regulator, lender A, and lender B parties.
 
 ## 7. Judge Alignment
 
-Technical execution:
-The app builds successfully, uses a clean Next.js structure, keeps reusable dashboard components, and includes a DAML contract model for the Canton workflow.
+**Technical execution**: Next.js product, Daml contracts, automated API tests, Daml lifecycle tests, and a completed DevNet lifecycle.
 
-Originality:
-The focus is private invoice financing with confidential lender competition, not a generic token dashboard.
+**Originality**: Private lender competition for receivables financing, with a regulator audit trail that does not expose lender pricing.
 
-User experience:
-The interface is closer to Stripe, Mercury, or Brex than a crypto wallet.
+**User experience**: Enterprise dashboard patterns rather than crypto-wallet interactions.
 
-Real-world applicability:
-Invoice financing is a real trade finance need where privacy materially matters.
+**Real-world applicability**: Invoice financing is a concrete working-capital workflow where privacy materially affects adoption.
 
-## 8. Next Milestones
+## 8. Roadmap
 
-- Deploy the compiled Daml package to Canton DevNet
-- Repeat the local JSON API flow on the Seaport shared DevNet validator
-- Add invoice detail visibility matrix
-- Live deployment and 3-minute product video
+- Configure production OIDC so every signed-in user maps to one authorized Canton role.
+- Complete the Vercel DevNet integration using server-side M2M token refresh.
+- Add buyer attestation and document evidence before claiming verified invoices.
+- Integrate a real payment or tokenized-deposit rail before claiming asset settlement.

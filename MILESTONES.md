@@ -2,30 +2,22 @@
 
 ## Before Final Submission
 
-- Deploy CantonFlow Daml contracts to Canton DevNet.
-- Capture DevNet proof: package ID, update IDs, and screenshots.
-- Deploy live product and add the URL to the README.
+- Capture the existing DevNet package and lifecycle evidence in screenshots.
+- Configure production OIDC for the live product.
 - Record the 3-minute pitch/product video.
-- Repeat the full UI-driven ledger lifecycle on DevNet after Seaport validator access is enabled.
-- Add invoice detail page backed by the supplier's ledger view.
 - Add API and browser coverage for workspace loading and mutation errors.
 
 ## Canton Integration
 
-- Repeat the verified local ledger flow on the Seaport shared DevNet validator.
-- Deploy the compiled DAR to Canton DevNet.
-- Capture DevNet update IDs for invoice request, lender invite, funding bid, agreement, and settlement.
-- Add idempotent request handling for retry-safe ledger submissions.
 - Integrate a real payment or tokenized-deposit rail before claiming settlement execution.
 
 ## Product Polish
 
-- Replace local proof IDs with DevNet proof IDs after Seaport access is enabled.
 - Add empty/loading/error states across dashboard tables.
 - Add mobile QA screenshots.
 - Improve copy around compliance and audit visibility.
 - Add a short architecture diagram to the deck.
-- Add production authentication that maps verified users to Canton parties.
+- Complete production OIDC configuration that maps verified users to Canton roles and authorized parties.
 
 ## Product Narrative
 
