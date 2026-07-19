@@ -48,7 +48,6 @@ interface ActiveContractsRequest {
     };
   };
   verbose: boolean;
-  eventFormat: null;
   activeAtOffset: number | string;
 }
 
@@ -180,7 +179,6 @@ export async function queryActiveContracts(
       },
     },
     verbose: false,
-    eventFormat: null,
     activeAtOffset,
   };
 

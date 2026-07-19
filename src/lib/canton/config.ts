@@ -4,6 +4,7 @@ export interface CantonConfig {
   ledgerApiToken: string;
   userId: string;
   packageId: string;
+  packageName?: string;
   parties: {
     supplier: string;
     buyer: string;
@@ -62,6 +63,7 @@ export function getCantonConfig(role: CantonRole = "supplier"): CantonConfig {
     ledgerApiToken: process.env.LEDGER_API_TOKEN || "",
     userId: getUserId(role),
     packageId: process.env.CANTONFLOW_PACKAGE_ID!,
+    packageName: process.env.CANTONFLOW_PACKAGE_NAME || "cantonflow",
     parties: {
       supplier: process.env.CANTONFLOW_SUPPLIER_PARTY!,
       buyer: process.env.CANTONFLOW_BUYER_PARTY!,
@@ -77,4 +79,11 @@ export function cantonTemplateId(
   template: string,
 ) {
   return `${config.packageId}:CantonFlow:${template}`;
+}
+
+export function cantonQueryTemplateId(
+  config: Pick<CantonConfig, "packageName">,
+  template: string,
+) {
+  return `#${config.packageName || "cantonflow"}:CantonFlow:${template}`;
 }

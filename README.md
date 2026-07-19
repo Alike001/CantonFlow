@@ -115,38 +115,27 @@ HOME=$PWD/.home .tools/dpm/dpm damlc inspect-dar .daml/dist/cantonflow-0.1.0.dar
 
 ## Canton DevNet Proof
 
-Status: waiting for Seaport shared-validator access from the hackathon admin.
+The CantonFlow DAR is deployed and its full receivables-RFQ lifecycle has executed on the Encode Hackathon Seaport `5N Sandbox` Canton DevNet validator.
 
-The product is already wired to Canton JSON API routes and has been verified locally with the same Daml package and workflow shape intended for DevNet. Once access is granted, the `.env.devnet` values will be replaced with DevNet validator credentials and the full flow will be repeated on-ledger.
+- DAR package ID: `8e13ff7aa3f44145da0bbcfc560667b0d014db8d751651085367d5945996c42b`
+- RFQ run: `devnet-20260719132732513`
+- `InvoiceRequest`: update `1220d993bbe8e7bc0d84f0936b2d1444975892fbbcac1b4e2a3449da10b9a1fb38c8`, offset `4454876`
+- Lender A and Lender B invites: offsets `4454882` and `4454885`
+- Private lender bids: offsets `4454888` and `4454891`
+- `FundingAgreement`: update `12209450d8d77d78e51f9d28575bc34dc7e412c6aa5431d15dd5286c3b5d914d2be1`, offset `4454894`
+- `SettlementInstruction`: update `1220be6eb562d49e6dac1c8d8d5e33c4a5a5711c42baba869f44c5d4e7c6839ff188`, offset `4454900`
 
-The Vercel deployment is not a live ledger product until it has an externally reachable DevNet JSON API, its production environment variables, and production authentication. Do not use the public URL as DevNet evidence before those prerequisites are complete.
+The settlement instruction is a Canton workflow record, not a transfer of money. It proves supplier/lender coordination only.
 
-Access request party ID sent to admin:
+To repeat the run against an authorized DevNet environment, keep secrets in ignored `.env.devnet`, then run:
 
-```text
-37de9fd8a7c09e227c70f85c781542b8::1220bafc5cf456aa4fb394690836cb8151b67d6476ecfaf15f56cc2494f32a98fef0
+```bash
+npm run devnet:token
+npm run devnet:parties
+npm run devnet:lifecycle
 ```
 
-DevNet proof checklist to replace after access:
-
-| Evidence | Current value |
-| --- | --- |
-| DevNet validator | Pending Seaport access |
-| DevNet JSON Ledger API URL | Pending Seaport access |
-| DAR package ID | Pending DevNet upload; record the package ID from the uploaded DAR |
-| Supplier party | Pending DevNet party |
-| Buyer party | Pending DevNet party |
-| Lender A party | Pending DevNet party |
-| Lender B party | Pending DevNet party |
-| Regulator party | Pending DevNet party |
-| `InvoiceRequest` update ID | Pending DevNet execution |
-| `LenderInvite` update ID | Pending DevNet execution |
-| `FundingBid` update ID | Pending DevNet execution |
-| `FundingAgreement` update ID | Pending DevNet execution |
-| `SettlementInstruction` update ID | Pending DevNet execution |
-| Screenshots | Pending DevNet execution |
-
-DevNet proof will replace the local proof after Seaport shared-validator access is enabled for the project wallet.
+The lifecycle runner saves local evidence to `tmp/cantonflow-devnet-lifecycle.json`. The Vercel deployment is not yet a public DevNet product because it still needs server-side DevNet credentials and production OIDC configuration.
 
 ## Remaining Milestones
 

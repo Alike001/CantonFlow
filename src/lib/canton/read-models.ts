@@ -1,4 +1,4 @@
-import { cantonTemplateId, type CantonConfig } from "./config";
+import { cantonQueryTemplateId, type CantonConfig } from "./config";
 import {
   queryCurrentActiveContracts,
   type ActiveContractEntry,
@@ -30,7 +30,7 @@ export async function readRoleContracts(
   config: CantonConfig,
   templates: string[],
 ) {
-  const templateIds = templates.map((template) => cantonTemplateId(config, template));
+  const templateIds = templates.map((template) => cantonQueryTemplateId(config, template));
   const entries = await queryCurrentActiveContracts(config, templateIds);
 
   return entries

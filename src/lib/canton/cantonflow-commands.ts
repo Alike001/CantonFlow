@@ -1,4 +1,4 @@
-import { cantonTemplateId, type CantonConfig } from "./config";
+import { cantonQueryTemplateId, cantonTemplateId, type CantonConfig } from "./config";
 import {
   buildCreateCommand,
   buildExerciseCommand,
@@ -65,7 +65,7 @@ export async function createInvoiceRequestOnLedger(
 
   try {
     const invoiceRequestTemplateId = cantonTemplateId(config, "InvoiceRequest");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "InvoiceRequest")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       invoiceRequestTemplateId,
@@ -105,7 +105,7 @@ export async function openFundingRoundOnLedger(
   });
 
   try {
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "FundingRound")]);
     return {
       ...result,
       fundingRoundContractId: findCreatedContractIdAtOffset(
@@ -151,7 +151,7 @@ export async function inviteLenderOnLedger(
 
   try {
     const lenderInviteTemplateId = cantonTemplateId(config, "LenderInvite");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "LenderInvite"), cantonQueryTemplateId(config, "FundingRound")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       lenderInviteTemplateId,
@@ -213,7 +213,7 @@ export async function submitFundingBidOnLedger(
 
   try {
     const fundingBidTemplateId = cantonTemplateId(config, "FundingBid");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "FundingBid")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       fundingBidTemplateId,
@@ -262,7 +262,7 @@ export async function acceptFundingBidOnLedger(
 
   try {
     const fundingAgreementTemplateId = cantonTemplateId(config, "FundingAgreement");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "FundingAgreement")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       fundingAgreementTemplateId,
@@ -311,7 +311,7 @@ export async function proposeSettlementOnLedger(
 
   try {
     const settlementProposalTemplateId = cantonTemplateId(config, "SettlementProposal");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "SettlementProposal")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       settlementProposalTemplateId,
@@ -357,7 +357,7 @@ export async function confirmSettlementOnLedger(
 
   try {
     const settlementInstructionTemplateId = cantonTemplateId(config, "SettlementInstruction");
-    const contracts = await queryActiveContracts(config, result.completionOffset);
+    const contracts = await queryActiveContracts(config, result.completionOffset, [cantonQueryTemplateId(config, "SettlementInstruction")]);
     const createdContractId = findCreatedContractIdAtOffset(
       contracts,
       settlementInstructionTemplateId,

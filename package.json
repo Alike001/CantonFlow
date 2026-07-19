@@ -11,7 +11,8 @@
     "test:daml": "bash scripts/test-daml.sh",
     "local:up": "bash scripts/start-local-stack.sh",
     "devnet:token": "bash scripts/refresh-devnet-token.sh",
-    "devnet:parties": "bash scripts/allocate-devnet-parties.sh"
+    "devnet:parties": "bash scripts/allocate-devnet-parties.sh",
+    "devnet:lifecycle": "node scripts/run-devnet-lifecycle.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

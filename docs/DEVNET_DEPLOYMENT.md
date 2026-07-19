@@ -18,11 +18,12 @@ Done in this repository:
 - Architecture doc: `docs/CANTON_ARCHITECTURE.md`
 - DevNet upload helper: `scripts/upload-dar-devnet.sh`
 
-Not done yet:
+Completed on Encode Hackathon Seaport `5N Sandbox` Canton DevNet:
 
-- Canton DevNet validator/VPN access configured
-- DAR uploaded to DevNet
-- On-ledger transaction proof captured
+- DAR uploaded: package `8e13ff7aa3f44145da0bbcfc560667b0d014db8d751651085367d5945996c42b`
+- Five distinct CantonFlow role parties allocated and granted `CanActAs` rights to the authorized Ledger API user
+- Full lifecycle executed: RFQ, funding round, two lender invitations, two bids, bid acceptance, settlement proposal, and settlement instruction
+- Local evidence captured at `tmp/cantonflow-devnet-lifecycle.json` (ignored because it contains contract identifiers)
 
 ## Required External Access
 
@@ -124,15 +125,23 @@ Copy env template:
 cp .env.devnet.example .env.devnet
 ```
 
-Generate an OAuth2 token according to your Keycloak/validator setup and set:
+For the shared validator, obtain the M2M OIDC credential from the validator administrator and set it only in ignored `.env.devnet`:
 
 ```bash
-LEDGER_API_TOKEN=...
-JSON_LEDGER_API_URL=http://json-ledger-api.localhost:8080
+JSON_LEDGER_API_URL=https://ledger-api.validator.devnet.sandbox.fivenorth.io
+DEVNET_OIDC_TOKEN_URL=<validator token endpoint>
+DEVNET_M2M_CLIENT_ID=<validator M2M client ID>
+DEVNET_M2M_CLIENT_SECRET=<validator M2M client secret>
+DEVNET_M2M_AUDIENCE=<validator audience>
+DEVNET_M2M_SCOPE=daml_ledger_api
 CANTONFLOW_PACKAGE_ID=<main package id from inspect-dar>
-CANTONFLOW_SUPPLIER_USER_ID=<supplier user id>
-CANTONFLOW_LENDER_A_USER_ID=<lender A user id>
-CANTONFLOW_LENDER_B_USER_ID=<lender B user id>
+CANTONFLOW_PACKAGE_NAME=cantonflow
+CANTONFLOW_USER_ID=<value returned by GET /v2/authenticated-user>
+CANTONFLOW_SUPPLIER_USER_ID=<same Ledger API user ID>
+CANTONFLOW_BUYER_USER_ID=<same Ledger API user ID>
+CANTONFLOW_REGULATOR_USER_ID=<same Ledger API user ID>
+CANTONFLOW_LENDER_A_USER_ID=<same Ledger API user ID>
+CANTONFLOW_LENDER_B_USER_ID=<same Ledger API user ID>
 CANTONFLOW_SUPPLIER_PARTY=<supplier party>
 CANTONFLOW_BUYER_PARTY=<buyer party>
 CANTONFLOW_REGULATOR_PARTY=<regulator party>
@@ -144,10 +153,20 @@ DAR_PATH=.daml/dist/cantonflow-0.1.0.dar
 Upload:
 
 ```bash
+npm run devnet:token
 bash scripts/upload-dar-devnet.sh
 ```
 
 Successful upload should return `{}` or an equivalent successful package upload response.
+
+Allocate distinct parties, grant the authenticated Ledger API user `CanActAs` for them using `POST /v2/users/{user-id}/rights`, and execute the full lifecycle:
+
+```bash
+npm run devnet:parties
+npm run devnet:lifecycle
+```
+
+The rights endpoint requires `ParticipantAdmin` or identity-provider-admin authorization. The current shared-validator M2M credential exposes this right; verify it with `GET /v2/users/{user-id}/rights` before granting access.
 
 ## App JSON API Integration
 
@@ -251,7 +270,7 @@ d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
 
 The same route sequence should be repeated against the Seaport shared DevNet validator after org access is enabled. Replace the local update IDs with DevNet update IDs in the final submission.
 
-## On-Ledger Proof We Need For Submission
+## On-Ledger Proof For Submission
 
 Capture these artifacts:
 
@@ -280,12 +299,9 @@ Add this to README before final submission:
 - DevNet proof screenshots: <links>
 ```
 
-## Immediate Critical Path
+## Remaining Critical Path
 
-1. Install Daml/DPM.
-2. Run `./scripts/install-dpm.sh`.
-3. Run `HOME=$PWD/.home .tools/dpm/dpm build`.
-4. Get DevNet validator/VPN/onboarding access.
-5. Upload DAR.
-6. Execute the CantonFlow workflow on-ledger.
-7. Update README/deck/video with DevNet proof.
+1. Configure an externally reachable server-side DevNet integration for Vercel.
+2. Configure production OIDC and map verified identities to authorized Canton parties.
+3. Record a frontend demo against the DevNet-backed routes.
+4. Add the DevNet evidence to the deck and video.
