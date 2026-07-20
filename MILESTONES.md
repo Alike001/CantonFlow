@@ -1,27 +1,21 @@
 # Remaining Milestones
 
-## Before Final Submission
-
-- Capture the existing DevNet package and lifecycle evidence in screenshots.
-- Configure production OIDC for the live product.
-- Record the 3-minute pitch/product video.
-- Add API and browser coverage for workspace loading and mutation errors.
-
-## Canton Integration
+## Settlement Integration
 
 - Integrate a real payment or tokenized-deposit rail before claiming settlement execution.
 
+## Institutional Access
+
+- Replace time-limited judge access with an institutional OIDC provider and verified organization onboarding.
+- Add administrator-managed mappings between verified identities and authorized Canton parties.
+
 ## Product Polish
 
-- Add empty/loading/error states across dashboard tables.
-- Add mobile QA screenshots.
-- Improve copy around compliance and audit visibility.
-- Add a short architecture diagram to the deck.
-- Complete production OIDC configuration that maps verified users to Canton roles and authorized parties.
+- Add buyer attestation and document evidence without widening lender or regulator disclosure.
+- Expand browser coverage for workspace loading, authorization failures, and the complete RFQ lifecycle.
+- Add operational monitoring and recovery tooling for Ledger API failures.
 
-## Product Narrative
+## Market Expansion
 
-- Lead with the pain: public invoice financing leaks sensitive commercial data.
-- Show upload and marketplace.
-- Emphasize that lenders compete privately.
-- Close on Canton: contract-level selective disclosure and shared workflow state are the reason this belongs on Canton.
+- Support configurable lender pools beyond the two-lender privacy proof.
+- Add multiple currencies and jurisdiction-specific financing terms.

@@ -4,6 +4,8 @@ CantonFlow is a confidential receivables RFQ product for suppliers and instituti
 
 Built for the Encode Club x Canton Foundation Build on Canton Hackathon.
 
+Live product: [canton-flow-xi.vercel.app](https://canton-flow-xi.vercel.app)
+
 ## Why CantonFlow
 
 Invoice financing depends on sensitive commercial data: buyer identity, discount rates, lender appetite, and supplier cash-flow needs. Public-by-default workflows are a poor fit for this market.
@@ -172,7 +174,7 @@ npm run devnet:parties
 npm run devnet:lifecycle
 ```
 
-The lifecycle runner saves local evidence to `tmp/cantonflow-devnet-lifecycle.json`. The Vercel deployment is not yet a public DevNet product because it still needs server-side DevNet credentials and production OIDC configuration.
+The lifecycle runner saves local evidence to `tmp/cantonflow-devnet-lifecycle.json`. The live Vercel deployment connects to the same DevNet validator through server-only credentials and requires an authenticated, role-bound session for workspace access.
 
 ## Remaining Milestones
 

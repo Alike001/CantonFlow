@@ -274,40 +274,8 @@ d26e00e71f06ecd7dac3746c13f5d347ed0faae6e0fa0c6a9e385486a02b98c0
 | `FundingBid` submitted | `/api/canton/bids` | `1220fac191b01932d9d9851e5cdffe5dda4cc6cdade6012b61cda487d6b34380ad02` | `26` |
 | `FundingAgreement` accepted | `/api/canton/agreements` | `1220dbd129e3d533e903bf1d4b9767e741609e43608f005d61acba252c2b98c1fbc4` | `29` |
 
-The same route sequence should be repeated against the Seaport shared DevNet validator after org access is enabled. Replace the local update IDs with DevNet update IDs in the final submission.
+## Live DevNet Status
 
-## On-Ledger Proof For Submission
+The DAR and complete two-lender RFQ lifecycle have been executed on the Seaport `5N Sandbox` Canton DevNet validator. Package ID, update IDs, and completion offsets are recorded in the repository [README](../README.md#canton-devnet-proof).
 
-Capture these artifacts:
-
-- Screenshot or terminal output of successful DAR upload.
-- Package ID from `daml damlc inspect-dar` or `dpm damlc inspect-dar`.
-- At least one created `InvoiceRequest` contract on DevNet.
-- At least one exercised `SubmitFundingBid` choice.
-- At least one exercised `AcceptBid` choice creating `FundingAgreement`.
-- Optional: supplier settlement proposal and winning-lender confirmation creating `SettlementInstruction`. This is workflow coordination only; it does not transfer assets.
-- Update IDs / completion offsets from JSON Ledger API responses.
-- Screenshot from frontend showing the same lifecycle.
-
-## Submission Proof Format
-
-Add this to README before final submission:
-
-```md
-## Canton DevNet Proof
-
-- DevNet validator: <validator identifier or URL>
-- DAR package ID: <package id>
-- InvoiceRequest update ID: <update id>
-- FundingBid update ID: <update id>
-- FundingAgreement update ID: <update id>
-- SettlementInstruction update ID: <update id>
-- DevNet proof screenshots: <links>
-```
-
-## Remaining Critical Path
-
-1. Configure an externally reachable server-side DevNet integration for Vercel.
-2. Configure production OIDC and map verified identities to authorized Canton parties.
-3. Record a frontend demo against the DevNet-backed routes.
-4. Add the DevNet evidence to the deck and video.
+The Vercel deployment connects to the validator through server-only M2M credentials. Browser sessions are authenticated and bound to one configured Canton role; Ledger API credentials are never exposed to client code.
