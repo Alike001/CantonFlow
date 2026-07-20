@@ -1,6 +1,14 @@
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { timingSafeEqual } from "node:crypto";
+import { z } from "zod";
 
-import { getRoleForSubject, isOidcConfigured } from "@/lib/auth/roles";
+import {
+  getRoleForSubject,
+  isEvaluationAccessConfigured,
+  isOidcConfigured,
+  workspaceRoles,
+} from "@/lib/auth/roles";
 
 const oidcProvider = isOidcConfigured()
   ? [
@@ -15,14 +23,55 @@ const oidcProvider = isOidcConfigured()
     ]
   : [];
 
+const evaluationCredentials = z.object({
+  role: z.enum(workspaceRoles),
+  accessCode: z.string().min(1),
+});
+
+function isValidEvaluationCode(accessCode: string) {
+  const expected = Buffer.from(process.env.CANTONFLOW_EVALUATION_ACCESS_CODE || "");
+  const supplied = Buffer.from(accessCode);
+
+  return (
+    expected.length > 0 &&
+    expected.length === supplied.length &&
+    timingSafeEqual(expected, supplied)
+  );
+}
+
+const evaluationProvider = isEvaluationAccessConfigured()
+  ? [
+      Credentials({
+        id: "evaluation-access",
+        name: "Evaluation access",
+        credentials: {
+          role: { label: "Workspace role" },
+          accessCode: { label: "Access code", type: "password" },
+        },
+        authorize(credentials) {
+          const parsed = evaluationCredentials.safeParse(credentials);
+          if (!parsed.success || !isValidEvaluationCode(parsed.data.accessCode)) {
+            return null;
+          }
+
+          return {
+            id: `evaluation:${parsed.data.role}`,
+            name: `CantonFlow ${parsed.data.role}`,
+            cantonRole: parsed.data.role,
+          };
+        },
+      }),
+    ]
+  : [];
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  providers: oidcProvider,
+  providers: [...oidcProvider, ...evaluationProvider],
   session: { strategy: "jwt" },
   pages: { signIn: "/sign-in" },
   callbacks: {
-    jwt({ token }) {
-      token.cantonRole = getRoleForSubject(token.sub);
+    jwt({ token, user }) {
+      token.cantonRole = user?.cantonRole || token.cantonRole || getRoleForSubject(token.sub);
       return token;
     },
     session({ session, token }) {

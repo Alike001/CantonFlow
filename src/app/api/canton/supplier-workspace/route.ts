@@ -9,14 +9,15 @@ export async function GET() {
   if ("response" in authorization) return authorization.response;
 
   try {
-    const contracts = await readRoleContracts(getCantonConfig("supplier"), [
+    const config = getCantonConfig("supplier");
+    const contracts = await readRoleContracts(config, [
       "InvoiceRequest",
       "FundingRound",
       "FundingBid",
       "FundingAgreement",
       "SettlementProposal",
       "SettlementInstruction",
-    ]);
+    ], config.parties.supplier);
 
     return NextResponse.json({ contracts });
   } catch (error) {

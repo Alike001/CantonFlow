@@ -24,6 +24,12 @@ export function isOidcConfigured() {
   );
 }
 
+export function isEvaluationAccessConfigured() {
+  return Boolean(
+    process.env.AUTH_SECRET && process.env.CANTONFLOW_EVALUATION_ACCESS_CODE,
+  );
+}
+
 export function getRoleForSubject(subject: string | undefined): WorkspaceRole | null {
   if (!subject) return null;
 

@@ -96,7 +96,7 @@ testReceivablesRfqLifecycle = script do
       advanceAmount = 252000.0
       discountRate = 4.4
       settlementDays = 61
-      lenderNote = "Can settle quickly after invoice verification."
+      lenderNote = "Funding available after receivables review."
       submittedAt = submitted
 
   submitMustFail lenderA do

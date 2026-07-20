@@ -25,32 +25,42 @@ export interface SubmitAndWaitResponse {
 }
 
 interface ActiveContractsRequest {
-  filter: {
-    filtersByParty: Record<string, never>;
-    filtersForAnyParty: {
-      cumulative: Array<{
-        identifierFilter:
-          | {
-              WildcardFilter: {
-                value: {
-                  includeCreatedEventBlob: boolean;
-                };
-              };
-            }
-          | {
-              TemplateFilter: {
-                value: {
-                  templateId: string;
-                  includeCreatedEventBlob: boolean;
-                };
-              };
-            };
-      }>;
-    };
-  };
+  filter: ActiveContractsFilter;
   verbose: boolean;
   activeAtOffset: number | string;
 }
+
+type IdentifierFilter = {
+  identifierFilter:
+    | {
+        WildcardFilter: {
+          value: {
+            includeCreatedEventBlob: boolean;
+          };
+        };
+      }
+    | {
+        TemplateFilter: {
+          value: {
+            templateId: string;
+            includeCreatedEventBlob: boolean;
+          };
+        };
+      };
+};
+
+type CumulativeFilter = {
+  cumulative: IdentifierFilter[];
+};
+
+type ActiveContractsFilter =
+  | {
+      filtersByParty: Record<string, CumulativeFilter>;
+    }
+  | {
+      filtersByParty: Record<string, never>;
+      filtersForAnyParty: CumulativeFilter;
+    };
 
 export interface ActiveContractEntry {
   workflowId?: string;
@@ -147,37 +157,44 @@ export async function queryActiveContracts(
   config: CantonConfig,
   activeAtOffset: number | string,
   templateIds?: string[],
+  parties?: string[],
 ): Promise<ActiveContractEntry[]> {
+  const cumulative: IdentifierFilter[] = [
+    ...(templateIds?.length
+      ? templateIds.map((templateId) => ({
+          identifierFilter: {
+            TemplateFilter: {
+              value: {
+                templateId,
+                includeCreatedEventBlob: false,
+              },
+            },
+          },
+        }))
+      : [
+          {
+            identifierFilter: {
+              WildcardFilter: {
+                value: {
+                  includeCreatedEventBlob: false,
+                },
+              },
+            },
+          },
+        ]),
+  ];
+  const filter: ActiveContractsFilter = parties?.length
+    ? {
+        filtersByParty: Object.fromEntries(
+          parties.map((party) => [party, { cumulative }]),
+        ),
+      }
+    : {
+        filtersByParty: {},
+        filtersForAnyParty: { cumulative },
+      };
   const payload: ActiveContractsRequest = {
-    filter: {
-      filtersByParty: {},
-      filtersForAnyParty: {
-        cumulative: [
-          ...(templateIds?.length
-            ? templateIds.map((templateId) => ({
-                identifierFilter: {
-                  TemplateFilter: {
-                    value: {
-                      templateId,
-                      includeCreatedEventBlob: false,
-                    },
-                  },
-                },
-              }))
-            : [
-                {
-                  identifierFilter: {
-                    WildcardFilter: {
-                      value: {
-                        includeCreatedEventBlob: false,
-                      },
-                    },
-                  },
-                },
-              ]),
-        ],
-      },
-    },
+    filter,
     verbose: false,
     activeAtOffset,
   };
@@ -248,9 +265,10 @@ export async function getLedgerEnd(config: CantonConfig): Promise<number | strin
 export async function queryCurrentActiveContracts(
   config: CantonConfig,
   templateIds?: string[],
+  parties?: string[],
 ) {
   const ledgerEnd = await getLedgerEnd(config);
-  return queryActiveContracts(config, ledgerEnd, templateIds);
+  return queryActiveContracts(config, ledgerEnd, templateIds, parties);
 }
 
 export function findCreatedContractIdAtOffset(

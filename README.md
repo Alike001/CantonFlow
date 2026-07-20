@@ -92,6 +92,14 @@ CANTONFLOW_OIDC_SUBJECT_ROLES={"oidc-subject-for-supplier":"supplier","oidc-subj
 
 Without these values, production workspace and write routes fail closed. The local role selector is never enabled in production.
 
+For time-limited judge access, Auth.js can issue an evaluation session bound to one configured Canton role. Set a strong server-only code and share it only in the submission notes:
+
+```text
+CANTONFLOW_EVALUATION_ACCESS_CODE=<strong random access code>
+```
+
+This does not enable the local role selector or bypass API authorization. Each evaluation sign-in creates a signed session for one role, and server routes derive the corresponding Canton party from that session. Remove the variable after judging and use institutional OIDC for normal operation.
+
 ## Vercel DevNet Configuration
 
 The Ledger API credential is separate from user authentication. Configure the following in Vercel for Production and Preview, using the exact DevNet Party IDs allocated for CantonFlow:

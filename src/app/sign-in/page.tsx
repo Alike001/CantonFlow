@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { Landmark } from "lucide-react";
 
+import EvaluationAccessForm from "@/components/auth/EvaluationAccessForm";
 import RoleSelect from "@/components/auth/RoleSelect";
 import { APP } from "@/lib/constants";
-import { isLocalRoleSelectionEnabled, isOidcConfigured } from "@/lib/auth/roles";
+import {
+  isEvaluationAccessConfigured,
+  isLocalRoleSelectionEnabled,
+  isOidcConfigured,
+} from "@/lib/auth/roles";
 
 export default function SignInPage() {
   const localRoleSelectionEnabled = isLocalRoleSelectionEnabled();
   const oidcConfigured = isOidcConfigured();
+  const evaluationAccessConfigured = isEvaluationAccessConfigured();
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -46,6 +52,10 @@ export default function SignInPage() {
           <div className="mt-10">
             {localRoleSelectionEnabled ? <RoleSelect /> : null}
 
+            {!localRoleSelectionEnabled && evaluationAccessConfigured ? (
+              <EvaluationAccessForm />
+            ) : null}
+
             {!localRoleSelectionEnabled && oidcConfigured ? (
               <Link
                 href="/api/auth/signin/canton-oidc?callbackUrl=/supplier"
@@ -55,7 +65,7 @@ export default function SignInPage() {
               </Link>
             ) : null}
 
-            {!localRoleSelectionEnabled && !oidcConfigured ? (
+            {!localRoleSelectionEnabled && !oidcConfigured && !evaluationAccessConfigured ? (
               <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
                 Institutional SSO has not been configured for this deployment.
               </p>

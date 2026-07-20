@@ -35,7 +35,7 @@ const initialForm = {
   advance: "252000",
   rate: "4.9",
   term: "61",
-  note: "Can settle quickly after invoice verification.",
+  note: "Funding available after receivables review.",
 };
 
 function stringValue(value: unknown) {

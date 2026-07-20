@@ -2,7 +2,16 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getCantonConfig: vi.fn((role: string) => ({ role })),
+  getCantonConfig: vi.fn((role: string) => ({
+    role,
+    parties: {
+      supplier: "supplier-party",
+      buyer: "buyer-party",
+      regulator: "regulator-party",
+      lenderA: "lender-a-party",
+      lenderB: "lender-b-party",
+    },
+  })),
   getMissingCantonEnv: vi.fn(() => []),
   getLedgerEnd: vi.fn(),
   readRoleContracts: vi.fn(),
@@ -153,7 +162,11 @@ describe("Lender workspace isolation", () => {
     const response = await getLenderWorkspace(request);
 
     expect(mocks.getCantonConfig).toHaveBeenCalledWith("lenderB");
-    expect(mocks.readRoleContracts).toHaveBeenCalledTimes(1);
+    expect(mocks.readRoleContracts).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "lenderB" }),
+      expect.any(Array),
+      "lender-b-party",
+    );
     await expect(response.json()).resolves.toEqual({ lender: "lenderB", contracts: [] });
   });
 });

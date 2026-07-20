@@ -9,9 +9,10 @@ export async function GET() {
   if ("response" in authorization) return authorization.response;
 
   try {
-    const contracts = await readRoleContracts(getCantonConfig("regulator"), [
+    const config = getCantonConfig("regulator");
+    const contracts = await readRoleContracts(config, [
       "WorkflowAuditEvent",
-    ]);
+    ], config.parties.regulator);
 
     return NextResponse.json({ contracts });
   } catch (error) {

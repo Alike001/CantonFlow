@@ -29,9 +29,10 @@ function toLedgerContract(entry: ActiveContractEntry): LedgerContract | null {
 export async function readRoleContracts(
   config: CantonConfig,
   templates: string[],
+  party: string,
 ) {
   const templateIds = templates.map((template) => cantonQueryTemplateId(config, template));
-  const entries = await queryCurrentActiveContracts(config, templateIds);
+  const entries = await queryCurrentActiveContracts(config, templateIds, [party]);
 
   return entries
     .map(toLedgerContract)

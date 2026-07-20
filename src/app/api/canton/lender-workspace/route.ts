@@ -11,13 +11,14 @@ export async function GET(request: NextRequest) {
   const lender = authorization.role as "lenderA" | "lenderB";
 
   try {
-    const contracts = await readRoleContracts(getCantonConfig(lender), [
+    const config = getCantonConfig(lender);
+    const contracts = await readRoleContracts(config, [
       "LenderInvite",
       "FundingBid",
       "FundingAgreement",
       "SettlementProposal",
       "SettlementInstruction",
-    ]);
+    ], config.parties[lender]);
 
     return NextResponse.json({ lender, contracts });
   } catch (error) {
