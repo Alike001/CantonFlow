@@ -122,7 +122,8 @@ export async function submitAndWait(
     "Content-Type": "application/json",
   };
 
-  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
+  const token = await getLedgerApiToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/commands/submit-and-wait`,
@@ -185,7 +186,8 @@ export async function queryActiveContracts(
     "Content-Type": "application/json",
   };
 
-  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
+  const token = await getLedgerApiToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/active-contracts`,
@@ -208,7 +210,8 @@ export async function queryActiveContracts(
 export async function getLedgerEnd(config: CantonConfig): Promise<number | string> {
   const headers: Record<string, string> = {};
 
-  headers.Authorization = `Bearer ${await getLedgerApiToken()}`;
+  const token = await getLedgerApiToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(
     `${config.jsonLedgerApiUrl.replace(/\/$/, "")}/v2/state/ledger-end`,

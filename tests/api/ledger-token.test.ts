@@ -7,6 +7,7 @@ import {
 
 const managedKeys = [
   "LEDGER_API_TOKEN",
+  "CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API",
   "DEVNET_OIDC_TOKEN_URL",
   "DEVNET_M2M_CLIENT_ID",
   "DEVNET_M2M_CLIENT_SECRET",
@@ -58,5 +59,12 @@ describe("DevNet Ledger API token provider", () => {
     process.env.LEDGER_API_TOKEN = "static-token";
 
     await expect(getLedgerApiToken()).resolves.toBe("static-token");
+  });
+
+  it("allows an unauthenticated token only for the explicit local sandbox mode", async () => {
+    clearEnvironment();
+    process.env.CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API = "true";
+
+    await expect(getLedgerApiToken()).resolves.toBeNull();
   });
 });

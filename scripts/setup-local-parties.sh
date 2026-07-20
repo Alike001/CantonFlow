@@ -7,10 +7,11 @@ LEDGER_PORT="${LEDGER_PORT:-6865}"
 OUTPUT_FILE="${OUTPUT_FILE:-${ROOT_DIR}/tmp/cantonflow-local-parties.json}"
 SETUP_DAR_PATH="${ROOT_DIR}/local-ledger/.daml/dist/cantonflow-local-ledger-0.1.0.dar"
 LENDERS_OUTPUT_FILE="${OUTPUT_FILE}.lenders"
+REPROVISION_PARTIES="${LOCAL_REPROVISION_PARTIES:-false}"
 
 mkdir -p "$(dirname "${OUTPUT_FILE}")"
 
-if [[ -s "${OUTPUT_FILE}" ]] && node -e 'const fs = require("fs"); const parties = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.exit(parties.lenderA && parties.lenderB ? 0 : 1)' "${OUTPUT_FILE}"; then
+if [[ "${REPROVISION_PARTIES}" != "true" ]] && [[ -s "${OUTPUT_FILE}" ]] && node -e 'const fs = require("fs"); const parties = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.exit(parties.lenderA && parties.lenderB ? 0 : 1)' "${OUTPUT_FILE}"; then
   echo "Local party configuration already includes lender A and lender B."
   exit 0
 fi
@@ -20,7 +21,7 @@ fi
   HOME="${ROOT_DIR}/.home" "${ROOT_DIR}/.tools/dpm/dpm" build
 )
 
-if [[ -s "${OUTPUT_FILE}" ]]; then
+if [[ "${REPROVISION_PARTIES}" != "true" ]] && [[ -s "${OUTPUT_FILE}" ]]; then
   HOME="${ROOT_DIR}/.home" "${ROOT_DIR}/.tools/dpm/dpm" script \
     --ledger-host "${LEDGER_HOST}" \
     --ledger-port "${LEDGER_PORT}" \

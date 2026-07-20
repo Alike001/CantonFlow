@@ -87,6 +87,10 @@ export async function getLedgerApiToken() {
     return process.env.LEDGER_API_TOKEN;
   }
 
+  if (process.env.CANTONFLOW_ALLOW_UNAUTHENTICATED_JSON_API === "true") {
+    return null;
+  }
+
   throw new Error("Missing Ledger API authentication");
 }
 
