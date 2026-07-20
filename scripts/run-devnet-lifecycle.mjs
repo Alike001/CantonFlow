@@ -172,7 +172,7 @@ const bidA = await submit("bid-lender-a", [parties.lenderA], [
     advanceAmount: "252000.0",
     discountRate: "4.9",
     settlementDays: "61",
-    lenderNote: "Can settle after receivables verification.",
+    lenderNote: "Funding available after receivables review.",
     submittedAt: now(),
   }),
 ]);
